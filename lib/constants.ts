@@ -1,0 +1,15 @@
+export const PAGE_LINKS = {
+  HOME: "/",
+  CIPHER: "/cipher",
+  CLOAK: "/cloak",
+  BLOG: "/blog",
+  RESEARCH: "/research",
+  DOCS: "/docs",
+  GITHUB: "https://github.com/",
+  TWITTER: "https://twitter.com/",
+  TELEGRAM: "https://t.me/",
+  DISCORD: "https://discord.gg/",
+  CIPHER_DOCS: "/docs/cipher",
+  CLOAK_DOCS: "/docs/cloak",
+  CONTACT: "/contact",
+}
