@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { useMemo, useState } from "react"
+import { WalletProvider } from "../providers/WalletProvider"
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 
 type DemoMode = "cipher" | "cloak"
 
@@ -61,11 +63,17 @@ const cloakLogs = [
 
 function DemoPanelHeader({ mode }: { mode: DemoMode }) {
   return (
-    <div className="mb-4 border-b border-primary/20 pb-3">
-      <p className="text-xs tracking-[0.2em] text-primary uppercase">Interactive Demo</p>
-      <h3 className="mt-2 text-lg font-semibold text-zinc-50">
-        {mode === "cipher" ? "Cipher Voting Demo" : "Cloak Swap Demo"}
-      </h3>
+    <div className="mb-4 flex items-center justify-between border-b border-primary/20 pb-3">
+      <div>
+        <p className="text-xs tracking-[0.2em] text-primary uppercase">
+          Interactive Demo
+        </p>
+        <h3 className="mt-2 text-lg font-semibold text-zinc-50">
+          {mode === "cipher" ? "Cipher Voting Demo" : "Cloak Swap Demo"}
+        </h3>
+      </div>
+
+      <ConnectButton accountStatus="address" showBalance={false} />
     </div>
   )
 }
@@ -76,7 +84,9 @@ function CipherVotingUi() {
   return (
     <div className="space-y-4">
       <div className="border border-primary/20 bg-black/40 p-4">
-        <p className="text-xs tracking-[0.16em] text-primary/80 uppercase">Proposal #14</p>
+        <p className="text-xs tracking-[0.16em] text-primary/80 uppercase">
+          Proposal #14
+        </p>
         <p className="mt-2 text-sm text-zinc-200">
           Should treasury allocate 5% to ecosystem developer grants?
         </p>
@@ -107,7 +117,9 @@ function CipherVotingUi() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1">
-          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">Voting Power</span>
+          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">
+            Voting Power
+          </span>
           <input
             type="text"
             defaultValue="2500"
@@ -115,7 +127,9 @@ function CipherVotingUi() {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">Commitment Salt</span>
+          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">
+            Commitment Salt
+          </span>
           <input
             type="text"
             defaultValue="0x93f1..."
@@ -139,7 +153,9 @@ function CloakSwapUi() {
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1">
-          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">From</span>
+          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">
+            From
+          </span>
           <div className="flex border border-primary/20 bg-black/40">
             <input
               type="text"
@@ -159,7 +175,9 @@ function CloakSwapUi() {
         </label>
 
         <label className="space-y-1">
-          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">To</span>
+          <span className="text-xs tracking-[0.14em] text-primary/70 uppercase">
+            To
+          </span>
           <div className="flex border border-primary/20 bg-black/40">
             <input
               type="text"
@@ -202,12 +220,17 @@ function CloakSwapUi() {
 }
 
 function TransactionLogs({ mode }: { mode: DemoMode }) {
-  const logs = useMemo(() => (mode === "cipher" ? cipherLogs : cloakLogs), [mode])
+  const logs = useMemo(
+    () => (mode === "cipher" ? cipherLogs : cloakLogs),
+    [mode]
+  )
 
   return (
     <div className="border border-cyan-500/25 bg-black/45 p-4">
       <div className="mb-3 flex items-center justify-between border-b border-cyan-500/20 pb-2">
-        <p className="text-xs tracking-[0.2em] text-cyan-300 uppercase">Transaction Logs</p>
+        <p className="text-xs tracking-[0.2em] text-cyan-300 uppercase">
+          Transaction Logs
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -231,9 +254,13 @@ function TransactionLogs({ mode }: { mode: DemoMode }) {
               >
                 {log.status}
               </span>
-              <span className="font-mono text-[11px] text-cyan-200/70">{log.hash}</span>
+              <span className="font-mono text-[11px] text-cyan-200/70">
+                {log.hash}
+              </span>
             </div>
-            <p className="text-[11px] tracking-[0.14em] text-cyan-200/60 uppercase">{log.method}</p>
+            <p className="text-[11px] tracking-[0.14em] text-cyan-200/60 uppercase">
+              {log.method}
+            </p>
             <p className="mt-1 font-mono text-xs text-zinc-300">{log.params}</p>
           </motion.div>
         ))}
@@ -244,14 +271,16 @@ function TransactionLogs({ mode }: { mode: DemoMode }) {
 
 export function ProductDemoPanel({ mode }: ProductDemoPanelProps) {
   return (
-    <section className="mt-8 border border-primary/20 bg-card/70 p-5 sm:p-6">
-      <DemoPanelHeader mode={mode} />
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="border border-primary/20 bg-card/60 p-4">
-          {mode === "cipher" ? <CipherVotingUi /> : <CloakSwapUi />}
+    <WalletProvider>
+      <section className="mt-8 border border-primary/20 bg-card/70 p-5 sm:p-6">
+        <DemoPanelHeader mode={mode} />
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="border border-primary/20 bg-card/60 p-4">
+            {mode === "cipher" ? <CipherVotingUi /> : <CloakSwapUi />}
+          </div>
+          <TransactionLogs mode={mode} />
         </div>
-        <TransactionLogs mode={mode} />
-      </div>
-    </section>
+      </section>
+    </WalletProvider>
   )
 }
