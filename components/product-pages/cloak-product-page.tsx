@@ -6,162 +6,129 @@ import { Button } from "@/components/ui/button"
 import { SectionTitle } from "../ui/section-title"
 import { GridCard } from "../ui/grid-card"
 import { StepsGrid } from "../ui/steps-grid"
+import { ProductDemoPanel } from "./product-demo-panel"
 import { PAGE_LINKS } from "@/lib/constants"
 
-const benefits: TBenefit[] = [
+const cloakBenefits: TBenefit[] = [
   {
-    title: "Ship in Minutes, Not Months",
+    title: "Break On-chain Linkage",
     description:
-      "Skip the steep ZK learning curve. Add production-ready privacy with a small integration surface.",
+      "Decouple user identity from actions using high-anonymity privacy pools.",
   },
   {
-    title: "Tap Into Deep Liquidity",
+    title: "Gas-Abstracted Execution",
     description:
-      "Wrap your existing dapp flow without forcing asset migration or chain fragmentation.",
+      "Relayers handle gas via Paymasters, removing the 'ETH link' between wallets.",
   },
   {
-    title: "Audit-Ready Compliance",
+    title: "Compliant Anonymity",
     description:
-      "Built-in hooks for compliance workflows like view keys and proof-based screening.",
+      "Built-in Association Sets (Privacy Pools) ensure only 'clean' funds are shielded.",
   },
   {
-    title: "Retain User Sovereignty",
+    title: "Ephemeral Identity",
     description:
-      "No centralized proving trust assumptions in the core user interaction lifecycle.",
+      "Spin up one-time-use Shadow Accounts that self-destruct after execution.",
   },
   {
-    title: "Unbroken Composability",
-    description:
-      "Existing onchain interactions continue to work inside the privacy execution layer.",
+    title: "Ecosystem Neutrality",
+    description: "Works with any EVM dApp via modular, audited App Adapters.",
   },
   {
-    title: "Zero User Friction",
+    title: "Sybil-Resistant Privacy",
     description:
-      "Users keep familiar UX patterns while privacy runs in the background.",
-  },
-]
-
-const features: TFeature[] = [
-  {
-    title: "Universal SDK",
-    description:
-      "Integrate from frontend with minimal setup and no forced contract migration.",
-  },
-  {
-    title: "Browser-Native Proving",
-    description:
-      "Generate proofs client-side to avoid trusted server-side proving infrastructure.",
-  },
-  {
-    title: "Ephemeral Relayer Network",
-    description:
-      "Use fresh execution paths for each interaction to improve unlinkability.",
-  },
-  {
-    title: "Encrypted UTXO State",
-    description:
-      "Maintain encrypted notes for private balances and controlled partial spending.",
-  },
-  {
-    title: "Nullifier Registry",
-    description:
-      "Prevent double-spending with onchain nullifier checks and private ownership proofs.",
-  },
-  {
-    title: "Yield-Aware Vaults",
-    description:
-      "Extend privacy vaults to productive asset strategies while preserving confidentiality.",
+      "Integrate ZK-attestations to ensure private users are unique human actors.",
   },
 ]
 
-const devSteps: TStep[] = [
+const cloakFeatures: TFeature[] = [
+  {
+    title: "Ephemeral Account Abstraction",
+    description:
+      "Just-in-time smart accounts for single-session private interactions.",
+  },
+  {
+    title: "Association Set Proving",
+    description:
+      "Noir circuits that prove membership in 'clean' sets without doxxing the depositor.",
+  },
+  {
+    title: "Paymaster-Enabled Relayers",
+    description:
+      "Rust-based relayers that sponsor gas to maintain metadata-resistant privacy.",
+  },
+  {
+    title: "Adapter Registry",
+    description:
+      "Secure routing through pre-vetted dApp adapters to prevent arbitrary execution risks.",
+  },
+  {
+    title: "Recursive ZK-Proofs",
+    description:
+      "Verify complex identity statements efficiently on-chain with Noir.",
+  },
+  {
+    title: "Shielded Vaults",
+    description:
+      "Secure holding layer for capital intended for private execution.",
+  },
+]
+
+const cloakDevSteps: TStep[] = [
   {
     number: "01",
-    title: "Install and Enable",
+    title: "Shield and Set",
     description:
-      "Install the SDK and enable shielded transaction flow with minimal app changes.",
+      "User deposits into the Cloak Vault and selects a compliant Association Set.",
   },
   {
     number: "02",
-    title: "Client-Side Proving",
+    title: "Spawn Shadow Account",
     description:
-      "Generate local proofs to authorize intents without exposing signer identity.",
+      "Generate a one-time-use Ephemeral Account tied to a ZK-nullifier.",
   },
   {
     number: "03",
-    title: "Relayed Execution",
+    title: "Relayed Intent",
     description:
-      "Verify proofs and execute interactions through fresh proxy/relay routes.",
+      "Submit a proof-backed intent to the Relayer for gas-abstracted submission.",
   },
   {
     number: "04",
-    title: "Composable Settlement",
+    title: "Adapter Execution",
     description:
-      "Route execution outputs back into private balances while preserving app logic.",
+      "The Vault verifies the proof and routes the action through a certified App Adapter.",
   },
 ]
 
-const userSteps: TStep[] = [
+const cloakQuickSteps: TQuickStep[] = [
   {
-    number: "01",
-    title: "Shield Assets",
-    description:
-      "Deposit funds and receive private ownership notes tied to encrypted state.",
+    title: "Install Cloak",
+    code: `npm i @privacy-protocol/cloak ethers`,
+    description: "Install the identity anonymity toolkit.",
   },
   {
-    number: "02",
-    title: "Masked Interaction",
-    description:
-      "Authorize actions with proof-backed intents and temporary execution routing.",
-  },
-  {
-    number: "03",
-    title: "Private Settlement",
-    description:
-      "Outputs are routed back into private balances without public identity linkage.",
-  },
-  {
-    number: "04",
-    title: "Anonymous Withdrawal",
-    description:
-      "Exit to any wallet while breaking direct deposit-to-withdrawal linkability.",
-  },
-]
+    title: "Initialize Cloak",
+    code: `import { useCloak } from "@privacy-protocol/cloak/hooks"
 
-const quickSteps: TQuickStep[] = [
-  {
-    title: "Install the SDK",
-    code: `npm i privacy-protocol ethers`,
-    description: "Install the package and core dependencies.",
-  },
-  {
-    title: "Set Up",
-    code: `import { useDeposit, useExecuteAction } from "privacy-protocol/hooks"
-
-const config = {
-  poolAddress,
-  provider,
-  signer,
-}`,
-    description:
-      "Initialize config with provider, signer, and protocol addresses.",
-  },
-  {
-    title: "Use Hooks",
-    code: `const { deposit } = useDeposit(config)
-const { executeAction } = useExecuteAction(config)
-
-const depositResult = await deposit({ token, amount })
-const result = await executeAction({
-  token,
-  amount,
-  target,
-  data,
-  secret: depositResult.secret,
-  nullifier: depositResult.nullifier,
+const cloak = useCloak({
+  vaultAddress: CLOAK_VAULT_ADDR,
+  registryAddress: ADAPTER_REGISTRY_ADDR,
 })`,
+    description: "Set up the vault and adapter registry configuration.",
+  },
+  {
+    title: "Execute Privately",
+    code: `const { shieldAndExecute } = cloak;
+
+await shieldAndExecute({
+  adapterId: "UNISWAP_V3_ADAPTER",
+  action: "swap",
+  params: { path: [ETH, DAI], amount: 1.0 },
+  associationSet: "COMMUNITY_SAFE_SET"
+});`,
     description:
-      "Deposit and execute private actions with the SDK lifecycle hooks.",
+      "Shield funds and execute an action via a shadow account in one flow.",
   },
 ]
 
@@ -171,15 +138,12 @@ export function CloakProductPage() {
       <section className="relative overflow-hidden px-6 pt-36 pb-20 sm:pt-40">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(34,197,94,0.22),transparent_50%)]" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <p className="text-xs tracking-[0.24em] text-primary uppercase">
-            Web3 Privacy Infrastructure
-          </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-balance text-zinc-50 sm:text-5xl md:text-6xl">
             Privacy Protocol Cloak
           </h1>
           <p className="mx-auto mt-5 max-w-3xl font-mono text-sm leading-relaxed text-primary/75 sm:text-base">
-            The modular privacy layer for EVM applications, designed for
-            composability, developer velocity, and real-world production use.
+            Anonymize the actor, not just the asset, using ZK-powered Ephemeral
+            Accounts and compliant Privacy Pools
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -206,7 +170,7 @@ export function CloakProductPage() {
             description="Everything needed to integrate privacy into your application stack."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {benefits.map((benefit) => (
+            {cloakBenefits.map((benefit) => (
               <GridCard
                 key={benefit.title}
                 title={benefit.title}
@@ -220,15 +184,8 @@ export function CloakProductPage() {
       <StepsGrid
         title="How It Works (For Developers)"
         description="Integrate privacy with predictable SDK workflows and modular execution."
-        steps={devSteps}
+        steps={cloakDevSteps}
         numberTone="green"
-      />
-
-      <StepsGrid
-        title="How It Works (For Users)"
-        description="Keep UX familiar while identity and action trails stay private."
-        steps={userSteps}
-        numberTone="cyan"
       />
 
       <section className="relative px-6 py-20">
@@ -238,7 +195,7 @@ export function CloakProductPage() {
             description="Core primitives that make privacy integration practical at scale."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
+            {cloakFeatures.map((feature) => (
               <GridCard
                 key={feature.title}
                 title={feature.title}
@@ -256,7 +213,7 @@ export function CloakProductPage() {
             description="Get privacy-enabled in minutes with a compact integration flow."
           />
           <div className="space-y-4">
-            {quickSteps.map((step, index) => (
+            {cloakQuickSteps.map((step, index) => (
               <motion.article
                 key={step.title}
                 initial={{ opacity: 0, x: -14 }}
@@ -284,6 +241,8 @@ export function CloakProductPage() {
               </motion.article>
             ))}
           </div>
+
+          <ProductDemoPanel mode="cloak" />
         </div>
       </section>
     </main>

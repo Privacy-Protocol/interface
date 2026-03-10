@@ -6,162 +6,129 @@ import { Button } from "@/components/ui/button"
 import { SectionTitle } from "../ui/section-title"
 import { StepsGrid } from "../ui/steps-grid"
 import { GridCard } from "../ui/grid-card"
+import { ProductDemoPanel } from "./product-demo-panel"
 import { PAGE_LINKS } from "@/lib/constants"
 
-const benefits: TBenefit[] = [
+const cipherBenefits: TBenefit[] = [
   {
-    title: "Ship in Minutes, Not Months",
+    title: "Shield the 'What', Not the 'Who'",
     description:
-      "Skip the steep ZK learning curve. Add production-ready privacy with a small integration surface.",
+      "Keep transaction data secret while using your primary on-chain reputation.",
   },
   {
-    title: "Tap Into Deep Liquidity",
+    title: "Zero Metadata Leaks",
     description:
-      "Wrap your existing dapp flow without forcing asset migration or chain fragmentation.",
+      "Sensitive inputs never touch the mempool; only ZK-proofs are visible.",
   },
   {
-    title: "Audit-Ready Compliance",
+    title: "Verify Without Revealing",
     description:
-      "Built-in hooks for compliance workflows like view keys and proof-based screening.",
+      "Prove values are within range (e.g. Bid > 1 ETH) without exposing the exact number.",
   },
   {
-    title: "Retain User Sovereignty",
+    title: "Secure State Recovery",
     description:
-      "No centralized proving trust assumptions in the core user interaction lifecycle.",
+      "In-browser encryption ensures data is recoverable by authorized parties.",
   },
   {
-    title: "Unbroken Composability",
+    title: "Low Friction Gas",
     description:
-      "Existing onchain interactions continue to work inside the privacy execution layer.",
+      "No relayers or AA needed. Users pay gas from their own wallets as usual.",
   },
   {
-    title: "Zero User Friction",
+    title: "Audit-Ready View Keys",
     description:
-      "Users keep familiar UX patterns while privacy runs in the background.",
-  },
-]
-
-const features: TFeature[] = [
-  {
-    title: "Universal SDK",
-    description:
-      "Integrate from frontend with minimal setup and no forced contract migration.",
-  },
-  {
-    title: "Browser-Native Proving",
-    description:
-      "Generate proofs client-side to avoid trusted server-side proving infrastructure.",
-  },
-  {
-    title: "Ephemeral Relayer Network",
-    description:
-      "Use fresh execution paths for each interaction to improve unlinkability.",
-  },
-  {
-    title: "Encrypted UTXO State",
-    description:
-      "Maintain encrypted notes for private balances and controlled partial spending.",
-  },
-  {
-    title: "Nullifier Registry",
-    description:
-      "Prevent double-spending with onchain nullifier checks and private ownership proofs.",
-  },
-  {
-    title: "Yield-Aware Vaults",
-    description:
-      "Extend privacy vaults to productive asset strategies while preserving confidentiality.",
+      "Grant temporary access to private data for compliance or dispute resolution.",
   },
 ]
 
-const devSteps: TStep[] = [
+const cipherFeatures: TFeature[] = [
+  {
+    title: "ZK-Commitment Engine",
+    description:
+      "Standardized Poseidon hashing for locking private data to public proofs.",
+  },
+  {
+    title: "Client-Side Encryption (ECIES)",
+    description:
+      "Asymmetric encryption for secure off-chain data persistence on-chain.",
+  },
+  {
+    title: "Noir Private Inputs",
+    description:
+      "Native support for complex data-logic proofs generated in the browser.",
+  },
+  {
+    title: "Sealed State Storage",
+    description:
+      "On-chain storage for encrypted blobs linked to verified ZK-nullifiers.",
+  },
+  {
+    title: "Selective Disclosure",
+    description:
+      "Logic for revealing specific fields of a transaction without doxxing the rest.",
+  },
+  {
+    title: "Nullifier Enforcement",
+    description:
+      "Prevents data re-use or 'double-reveal' attacks in auctions and voting.",
+  },
+]
+
+const cipherDevSteps: TStep[] = [
   {
     number: "01",
-    title: "Install and Enable",
+    title: "Commit and Encrypt",
     description:
-      "Install the SDK and enable shielded transaction flow with minimal app changes.",
+      "User inputs data; SDK generates a Poseidon hash and encrypts the payload.",
   },
   {
     number: "02",
-    title: "Client-Side Proving",
+    title: "Noir Verification",
     description:
-      "Generate local proofs to authorize intents without exposing signer identity.",
+      "Browser-native ZK-proof is generated to validate inputs against dApp rules.",
   },
   {
     number: "03",
-    title: "Relayed Execution",
+    title: "Public Submission",
     description:
-      "Verify proofs and execute interactions through fresh proxy/relay routes.",
+      "Submit [Proof, Commitment, Ciphertext] from the user's standard wallet.",
   },
   {
     number: "04",
-    title: "Composable Settlement",
+    title: "Secure Settlement",
     description:
-      "Route execution outputs back into private balances while preserving app logic.",
+      "Contract verifies proof and stores the secret state for later authorized reveal.",
   },
 ]
 
-const userSteps: TStep[] = [
+const cipherQuickSteps: TQuickStep[] = [
   {
-    number: "01",
-    title: "Shield Assets",
-    description:
-      "Deposit funds and receive private ownership notes tied to encrypted state.",
+    title: "Install Cipher",
+    code: `npm i @privacy-protocol/cipher`,
+    description: "Install the data confidentiality toolkit.",
   },
   {
-    number: "02",
-    title: "Masked Interaction",
-    description:
-      "Authorize actions with proof-backed intents and temporary execution routing.",
-  },
-  {
-    number: "03",
-    title: "Private Settlement",
-    description:
-      "Outputs are routed back into private balances without public identity linkage.",
-  },
-  {
-    number: "04",
-    title: "Anonymous Withdrawal",
-    description:
-      "Exit to any wallet while breaking direct deposit-to-withdrawal linkability.",
-  },
-]
+    title: "Initialize Cipher",
+    code: `import { useCipher } from "@privacy-protocol/cipher/hooks"
 
-const quickSteps: TQuickStep[] = [
-  {
-    title: "Install the SDK",
-    code: `npm i privacy-protocol ethers`,
-    description: "Install the package and core dependencies.",
-  },
-  {
-    title: "Set Up",
-    code: `import { useDeposit, useExecuteAction } from "privacy-protocol/hooks"
-
-const config = {
-  poolAddress,
-  provider,
-  signer,
-}`,
-    description:
-      "Initialize config with provider, signer, and protocol addresses.",
-  },
-  {
-    title: "Use Hooks",
-    code: `const { deposit } = useDeposit(config)
-const { executeAction } = useExecuteAction(config)
-
-const depositResult = await deposit({ token, amount })
-const result = await executeAction({
-  token,
-  amount,
-  target,
-  data,
-  secret: depositResult.secret,
-  nullifier: depositResult.nullifier,
+const cipher = useCipher({
+  verifierAddress: VERIFIER_CONTRACT_ADDR,
+  managerPubKey: MANAGER_ENCRYPTION_KEY,
 })`,
+    description: "Configure the ZK-verifier and encryption recipient keys.",
+  },
+  {
+    title: "Submit Secret Data",
+    code: `const { submitConfidential } = cipher;
+
+await submitConfidential({
+  data: { bidAmount: 50000, secretNote: "Hidden Bid" },
+  constraints: { min: 1000, max: 100000 },
+  target: "AUCTION_CONTRACT_ADDR"
+});`,
     description:
-      "Deposit and execute private actions with the SDK lifecycle hooks.",
+      "Generate ZK-proof, encrypt data, and submit to the blockchain.",
   },
 ]
 
@@ -171,15 +138,12 @@ export function CipherProductPage() {
       <section className="relative overflow-hidden px-6 pt-36 pb-20 sm:pt-40">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(34,197,94,0.22),transparent_50%)]" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <p className="text-xs tracking-[0.24em] text-primary uppercase">
-            Web3 Privacy Infrastructure
-          </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-balance text-zinc-50 sm:text-5xl md:text-6xl">
             Privacy Protocol Cipher
           </h1>
           <p className="mx-auto mt-5 max-w-3xl font-mono text-sm leading-relaxed text-primary/75 sm:text-base">
-            The modular privacy layer for EVM applications, designed for
-            composability, developer velocity, and real-world production use.
+            Shield sensitive transaction data with ZK-commitments and in-browser
+            encryption while maintaining your on-chain identity.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -206,7 +170,7 @@ export function CipherProductPage() {
             description="Everything needed to integrate privacy into your application stack."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {benefits.map((benefit) => (
+            {cipherBenefits.map((benefit) => (
               <GridCard
                 key={benefit.title}
                 title={benefit.title}
@@ -220,15 +184,8 @@ export function CipherProductPage() {
       <StepsGrid
         title="How It Works (For Developers)"
         description="Integrate privacy with predictable SDK workflows and modular execution."
-        steps={devSteps}
+        steps={cipherDevSteps}
         numberTone="green"
-      />
-
-      <StepsGrid
-        title="How It Works (For Users)"
-        description="Keep UX familiar while identity and action trails stay private."
-        steps={userSteps}
-        numberTone="cyan"
       />
 
       <section className="relative px-6 py-20">
@@ -238,7 +195,7 @@ export function CipherProductPage() {
             description="Core primitives that make privacy integration practical at scale."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
+            {cipherFeatures.map((feature) => (
               <GridCard
                 key={feature.title}
                 title={feature.title}
@@ -256,7 +213,7 @@ export function CipherProductPage() {
             description="Get privacy-enabled in minutes with a compact integration flow."
           />
           <div className="space-y-4">
-            {quickSteps.map((step, index) => (
+            {cipherQuickSteps.map((step, index) => (
               <motion.article
                 key={step.title}
                 initial={{ opacity: 0, x: -14 }}
@@ -284,6 +241,8 @@ export function CipherProductPage() {
               </motion.article>
             ))}
           </div>
+
+          <ProductDemoPanel mode="cipher" />
         </div>
       </section>
     </main>
