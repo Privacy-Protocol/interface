@@ -3,10 +3,10 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { SectionTitle } from "../ui/section-title"
-import { GridCard } from "../ui/grid-card"
-import { StepsGrid } from "../ui/steps-grid"
-import { ProductDemoPanel } from "./product-demo-panel"
+import { SectionTitle } from "@/components/ui/section-title"
+import { GridCard } from "@/components/ui/grid-card"
+import { StepsGrid } from "@/components/ui/steps-grid"
+import { ProductDemoPanel } from "../product-demo-panel"
 import { PAGE_LINKS } from "@/lib/constants"
 
 const cloakBenefits: TBenefit[] = [

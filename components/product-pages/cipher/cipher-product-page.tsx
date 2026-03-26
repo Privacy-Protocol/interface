@@ -3,132 +3,140 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { SectionTitle } from "../ui/section-title"
-import { StepsGrid } from "../ui/steps-grid"
-import { GridCard } from "../ui/grid-card"
-import { ProductDemoPanel } from "./product-demo-panel"
+import { SectionTitle } from "../../ui/section-title"
+import { StepsGrid } from "../../ui/steps-grid"
+import { GridCard } from "../../ui/grid-card"
+import { ProductDemoPanel } from "../product-demo-panel"
 import { PAGE_LINKS } from "@/lib/constants"
 
 const cipherBenefits: TBenefit[] = [
   {
-    title: "Shield the 'What', Not the 'Who'",
+    title: "Shield the What, Not the Who",
     description:
       "Keep transaction data secret while using your primary on-chain reputation.",
   },
   {
-    title: "Zero Metadata Leaks",
+    title: "Proof-Backed DAO Actions",
     description:
-      "Sensitive inputs never touch the mempool; only ZK-proofs are visible.",
+      "DAO proposals can accept confidential votes without giving up deterministic on-chain settlement.",
   },
   {
     title: "Verify Without Revealing",
     description:
-      "Prove values are within range (e.g. Bid > 1 ETH) without exposing the exact number.",
+      "Prove values are within range or valid ballot domains without exposing the exact value.",
   },
   {
     title: "Secure State Recovery",
     description:
-      "In-browser encryption ensures data is recoverable by authorized parties.",
+      "In-browser encryption keeps hidden payloads recoverable for authorized tally or audit flows.",
   },
   {
     title: "Low Friction Gas",
     description:
-      "No relayers or AA needed. Users pay gas from their own wallets as usual.",
+      "No relayers or AA required. Users vote from their own wallets as usual.",
   },
   {
-    title: "Audit-Ready View Keys",
+    title: "Snapshot-Friendly Aggregation",
     description:
-      "Grant temporary access to private data for compliance or dispute resolution.",
+      "Projects can publish interim aggregate tallies without opening individual ballots.",
   },
 ]
 
 const cipherFeatures: TFeature[] = [
   {
-    title: "ZK-Commitment Engine",
+    title: "ZK Membership + Nullifiers",
     description:
-      "Standardized Poseidon hashing for locking private data to public proofs.",
+      "Gate participation and prevent double-voting without revealing the voter’s private witness.",
   },
   {
-    title: "Client-Side Encryption (ECIES)",
+    title: "Payload Commitments",
     description:
-      "Asymmetric encryption for secure off-chain data persistence on-chain.",
+      "Bind the proof to hidden vote content while keeping the plaintext offchain.",
   },
   {
-    title: "Noir Private Inputs",
+    title: "DAO Context Routing",
     description:
-      "Native support for complex data-logic proofs generated in the browser.",
+      "Votes route through the Cipher Router into proposal-specific adapter contexts.",
   },
   {
-    title: "Sealed State Storage",
+    title: "Encrypted Payload Storage",
     description:
-      "On-chain storage for encrypted blobs linked to verified ZK-nullifiers.",
+      "Optional encrypted vote payloads can be stored for later authorized decryption and tally.",
   },
   {
-    title: "Selective Disclosure",
+    title: "Interim Tally Snapshots",
     description:
-      "Logic for revealing specific fields of a transaction without doxxing the rest.",
+      "Authorized tally flows can publish aggregate progress without revealing individual ballots.",
   },
   {
-    title: "Nullifier Enforcement",
+    title: "Minimal Contract Changes",
     description:
-      "Prevents data re-use or 'double-reveal' attacks in auctions and voting.",
+      "Third-party DAOs only need lightweight context registration and tally settlement hooks.",
   },
 ]
 
 const cipherDevSteps: TStep[] = [
   {
     number: "01",
-    title: "Commit and Encrypt",
+    title: "Create Proposal Context",
     description:
-      "User inputs data; SDK generates a Poseidon hash and encrypts the payload.",
+      "The DAO registers a proposal-specific Cipher context and exposes the context metadata to the app.",
   },
   {
     number: "02",
-    title: "Noir Verification",
+    title: "Generate Proof in SDK",
     description:
-      "Browser-native ZK-proof is generated to validate inputs against dApp rules.",
+      "The SDK builds the commitment, membership proof, and nullifier for the selected ballot choice.",
   },
   {
     number: "03",
-    title: "Public Submission",
+    title: "Submit Hidden Vote",
     description:
-      "Submit [Proof, Commitment, Ciphertext] from the user's standard wallet.",
+      "Router and adapter events store only hidden bindings such as payload hash, root, and encrypted reference.",
   },
   {
     number: "04",
-    title: "Secure Settlement",
+    title: "Publish Aggregate Snapshot",
     description:
-      "Contract verifies proof and stores the secret state for later authorized reveal.",
+      "An authorized tally path can update interim or final counts without opening the underlying ballots.",
   },
 ]
 
 const cipherQuickSteps: TQuickStep[] = [
   {
-    title: "Install Cipher",
+    title: "Install Cipher Locally",
     code: `npm i @privacy-protocol/cipher`,
-    description: "Install the data confidentiality toolkit.",
+    description: "Add the SDK and point the app at your deployed Cipher contracts.",
   },
   {
-    title: "Initialize Cipher",
-    code: `import { useCipher } from "@privacy-protocol/cipher/hooks"
+    title: "Initialize the Client",
+    code: `import { createCipherClient } from "@privacy-protocol/cipher"
 
-const cipher = useCipher({
-  verifierAddress: VERIFIER_CONTRACT_ADDR,
-  managerPubKey: MANAGER_ENCRYPTION_KEY,
+const cipher = createCipherClient({
+  chain: sepolia,
+  walletClient,
+  appId: "privacy-protocol-demo-dao2",
 })`,
-    description: "Configure the ZK-verifier and encryption recipient keys.",
+    description: "Client setup stays minimal: chain, wallet, and appId.",
   },
   {
-    title: "Submit Secret Data",
-    code: `const { submitConfidential } = cipher;
+    title: "Vote Through DAO Context",
+    code: `const ballot = cipher.dao.ballots.abstainableYesNo().encode({
+  choice: "for",
+  voteBlinding: 4404n,
+  payloadSalt: 4505n,
+})
 
-await submitConfidential({
-  data: { bidAmount: 50000, secretNote: "Hidden Bid" },
-  constraints: { min: 1000, max: 100000 },
-  target: "AUCTION_CONTRACT_ADDR"
-});`,
+const proposal = selectedProposal
+
+await cipher.dao.vote({
+  daoAddress: DEMO_DAO2,
+  proposalId: proposal.proposalId,
+  ballot,
+  witness,
+})`,
     description:
-      "Generate ZK-proof, encrypt data, and submit to the blockchain.",
+      "The SDK derives contextId, generates the proof, and submits the hidden vote through the router.",
   },
 ]
 
@@ -142,8 +150,7 @@ export function CipherProductPage() {
             Privacy Protocol Cipher
           </h1>
           <p className="mx-auto mt-5 max-w-3xl font-mono text-sm leading-relaxed text-primary/75 sm:text-base">
-            Shield sensitive transaction data with ZK-commitments and in-browser
-            encryption while maintaining your on-chain identity.
+            Confidential action middleware for DAO voting, gated access, and proof-backed workflows where hidden inputs stay offchain but validity still settles onchain.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -167,7 +174,7 @@ export function CipherProductPage() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionTitle
             title="Secure. Simple. Seamless."
-            description="Everything needed to integrate privacy into your application stack."
+            description="Everything needed to integrate confidential voting and hidden action data into existing apps."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cipherBenefits.map((benefit) => (
@@ -183,7 +190,7 @@ export function CipherProductPage() {
 
       <StepsGrid
         title="How It Works (For Developers)"
-        description="Integrate privacy with predictable SDK workflows and modular execution."
+        description="Cipher keeps the router generic, the adapters specific, and the SDK responsible for the hard integration work."
         steps={cipherDevSteps}
         numberTone="green"
       />
@@ -192,7 +199,7 @@ export function CipherProductPage() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionTitle
             title="Features"
-            description="Core primitives that make privacy integration practical at scale."
+            description="Core primitives that make confidential voting and confidential action middleware practical."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cipherFeatures.map((feature) => (
@@ -210,7 +217,7 @@ export function CipherProductPage() {
         <div className="relative z-10 mx-auto max-w-7xl">
           <SectionTitle
             title="Quick Start Guide"
-            description="Get privacy-enabled in minutes with a compact integration flow."
+            description="The same DAO-native SDK flow you will use in the live demo panel below."
           />
           <div className="space-y-4">
             {cipherQuickSteps.map((step, index) => (
