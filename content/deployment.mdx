@@ -1,0 +1,150 @@
+# Deployment
+
+You can either use pre-deployed Cipher contracts on Sepolia or deploy your own instances.
+
+## Option 1: Use pre-deployed contracts (recommended for getting started)
+
+The core Cipher contracts are already deployed on Sepolia:
+
+| Contract | Address |
+| --- | --- |
+| **PrivateDaoAdapter** | `0x8274C53d82C5874455E67F80603F2792C9757cBE` |
+| **HonkVerifier** | `0x76A2d7a3F4927AaB90d2247eA541c305Ee8615F1` |
+
+You only need to deploy your own DAO contract that references the adapter:
+
+```typescript
+// scripts/deploy.ts
+import { ethers } from "hardhat";
+
+async function main() {
+  const PROPOSAL_MANAGER = "0x8274C53d82C5874455E67F80603F2792C9757cBE";
+  const governanceToken = "YOUR_TOKEN_ADDRESS";
+
+  const SimplePrivateDao = await ethers.getContractFactory("SimplePrivateDao");
+  const dao = await SimplePrivateDao.deploy(governanceToken, PROPOSAL_MANAGER);
+  await dao.waitForDeployment();
+
+  console.log("SimplePrivateDao deployed to:", await dao.getAddress());
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+```
+
+Run the deployment:
+
+```bash
+npx hardhat run scripts/deploy.ts --network sepolia
+```
+
+## Option 2: Deploy your own Cipher contracts
+
+For full control or deployment to other networks, deploy the complete Cipher stack yourself.
+
+### Step 1: Deploy the Honk Verifier
+
+The `VoteSubmissionVerifier` is the on-chain proof verifier. It's a large contract generated from the Noir circuit:
+
+```typescript
+// scripts/deployCipher.ts
+import { ethers } from "hardhat";
+
+async function main() {
+  // 1. Deploy the Honk verifier
+  const Verifier = await ethers.getContractFactory("HonkVerifier");
+  const verifier = await Verifier.deploy();
+  await verifier.waitForDeployment();
+  console.log("HonkVerifier:", await verifier.getAddress());
+
+  // 2. Deploy the PrivateDaoAdapter
+  const Adapter = await ethers.getContractFactory("PrivateDaoAdapter");
+  const adapter = await Adapter.deploy(await verifier.getAddress());
+  await adapter.waitForDeployment();
+  console.log("PrivateDaoAdapter:", await adapter.getAddress());
+
+  // 3. Deploy your DAO contract
+  const governanceToken = "YOUR_TOKEN_ADDRESS";
+  const Dao = await ethers.getContractFactory("SimplePrivateDao");
+  const dao = await Dao.deploy(governanceToken, await adapter.getAddress());
+  await dao.waitForDeployment();
+  console.log("SimplePrivateDao:", await dao.getAddress());
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+```
+
+### Step 2: Configure your Hardhat project
+
+Make sure your `hardhat.config.ts` has the right settings:
+
+```typescript
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@fhevm/hardhat-plugin";
+
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.8.27",
+    settings: {
+      optimizer: { enabled: true, runs: 10 },
+      evmVersion: "cancun",
+    },
+  },
+  networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL!,
+      accounts: [process.env.PRIVATE_KEY!],
+    },
+  },
+};
+
+export default config;
+```
+
+### Step 3: Run deployment
+
+```bash
+npx hardhat run scripts/deployCipher.ts --network sepolia
+```
+
+Save the deployed addresses — you'll need the `PrivateDaoAdapter` address for your DAO contract constructor and for client-side proof generation configuration.
+
+## Environment variables
+
+Create a `.env` file in your project root:
+
+```bash
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_KEY
+PRIVATE_KEY=your_deployer_private_key
+```
+
+Install dotenv and load it in your Hardhat config:
+
+```bash npm2yarn
+npm install --save-dev dotenv
+```
+
+```typescript
+// Add to the top of hardhat.config.ts
+import "dotenv/config";
+```
+
+## Network support
+
+| Network | Status |
+| --- | --- |
+| **Sepolia** | Available now — pre-deployed contracts ready to use |
+| **Ethereum mainnet** | Coming soon |
+| **L2 networks** | Planned |
+| **Starknet** | On the roadmap |
+| **Solana** | On the roadmap |
+
+## Next steps
+
+- [API Reference](/docs/api-reference) — Full contract interface and types

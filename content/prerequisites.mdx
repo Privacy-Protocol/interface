@@ -1,0 +1,54 @@
+# Prerequisites
+
+## Required tools
+
+| Tool | Version | Purpose |
+| --- | --- | --- |
+| **Node.js** | 20+ | Runtime for scripts and tooling |
+| **npm** or **pnpm** | Latest | Package management |
+| **Hardhat** | 2.28+ | Smart contract development framework |
+| **Solidity** | 0.8.24+ | Smart contract language |
+
+## Required packages
+
+These are installed automatically as peer dependencies:
+
+- [`@fhevm/solidity`](https://docs.zama.ai/fhevm) (^0.11.1) — Zama's FHE Solidity library
+- [`@openzeppelin/contracts`](https://docs.openzeppelin.com/contracts) (^5.6.1) — Standard contract utilities
+
+## For proof generation (optional)
+
+If you plan to generate ZK proofs in your application (client-side or server-side):
+
+| Package | Purpose |
+| --- | --- |
+| `@aztec/bb.js` | Honk SNARK proof backend |
+| `@noir-lang/noir_js` | Noir circuit execution |
+| `@aztec/foundation` | Poseidon2 hashing and field arithmetic |
+| `ethers` | ABI encoding and hex utilities |
+
+## Conceptual background
+
+You don't need to be a cryptography expert, but familiarity with these concepts will help:
+
+### Zero-Knowledge Proofs (ZK)
+
+A ZK proof lets you prove a statement is true without revealing the underlying data. In Cipher, ZK proofs are used to prove:
+- You are a member of the DAO (without revealing which member)
+- Your vote is within the valid range (without revealing your vote)
+- Your nullifier is correctly derived (preventing double voting)
+
+### Fully Homomorphic Encryption (FHE)
+
+FHE allows computation on encrypted data. In Cipher, votes are encrypted using FHE so the smart contract can:
+- Add encrypted votes together (homomorphic addition)
+- Store encrypted tallies that no one can read
+- Decrypt only the final aggregate when voting ends
+
+### Merkle Trees
+
+Cipher uses a Poseidon2 Merkle tree (height 32) to represent DAO membership. Each member has an identity secret whose hash is a leaf in the tree. The tree root is stored on-chain, and voters prove membership by providing a Merkle path — without revealing their position in the tree.
+
+### Nullifiers
+
+A nullifier is a deterministic value derived from `hash(proposal_id, identity_secret)`. It uniquely ties a voter to a proposal. Since the same inputs always produce the same nullifier, the contract can reject duplicate votes — without knowing who voted.

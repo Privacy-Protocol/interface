@@ -1,0 +1,196 @@
+# API Reference
+
+## IPrivateDaoAdapter
+
+The core interface for integrating private governance into your DAO.
+
+```solidity
+import {IPrivateDaoAdapter} from
+    "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+```
+
+### ProposalConfig
+
+```solidity
+struct ProposalConfig {
+    uint8   ballotSize;       // Number of voting options
+    uint256 votingStart;      // Timestamp when voting begins
+    uint256 votingEnd;        // Timestamp when voting ends
+    bytes32 membershipRoot;   // Merkle root for voter eligibility
+    bool    ended;            // True after tally decryption
+    bool    exists;           // True if proposal is initialized
+    bool    allowLiveReveal;  // Whether encrypted tallies can be queried mid-vote
+}
+```
+
+### Functions
+
+#### `propose`
+
+Creates a new proposal with encrypted tally slots.
+
+```solidity
+function propose(
+    uint256 _proposalId,
+    uint8   _ballotSize,
+    uint64  _votingPeriod,
+    bool    _allowLiveReveal,
+    bytes32 _membershipRoot
+) external returns (ProposalConfig memory proposal);
+```
+
+| Parameter | Description |
+| --- | --- |
+| `_proposalId` | Unique proposal identifier (must not already exist) |
+| `_ballotSize` | Number of voting options (e.g., 3 for Against/For/Abstain) |
+| `_votingPeriod` | Duration in seconds |
+| `_allowLiveReveal` | If `true`, encrypted tallies can be queried before voting ends |
+| `_membershipRoot` | Poseidon2 Merkle root of member identity secrets |
+
+#### `submitEncryptedVote`
+
+Submits a ZK-proven, FHE-encrypted vote.
+
+```solidity
+function submitEncryptedVote(
+    uint256 _proposalId,
+    bytes32 _nullifierHash,
+    bytes calldata _zkProof,
+    bytes calldata voteData
+) external;
+```
+
+| Parameter | Description |
+| --- | --- |
+| `_proposalId` | The proposal to vote on |
+| `_nullifierHash` | `poseidon2(proposalId, identitySecret)` — replay protection |
+| `_zkProof` | Serialized Honk SNARK proof bytes |
+| `voteData` | ABI-encoded `(bytes32 encryptedVote, bytes voteProof)` |
+
+**Reverts if:**
+- Proposal doesn't exist or voting period has ended
+- Nullifier was already used (double vote)
+- ZK proof verification fails
+
+#### `endVoting`
+
+Finalizes a proposal and decrypts the tallies.
+
+```solidity
+function endVoting(
+    uint256 _proposalId,
+    bytes calldata abiEncodedResults,
+    bytes calldata decryptionProof
+) external;
+```
+
+| Parameter | Description |
+| --- | --- |
+| `_proposalId` | The proposal to finalize |
+| `abiEncodedResults` | KMS-provided plaintext results |
+| `decryptionProof` | KMS decryption proof |
+
+**Reverts if:** voting period hasn't ended yet.
+
+#### `getRevealedTallies`
+
+Returns the decrypted vote counts after voting ends.
+
+```solidity
+function getRevealedTallies(
+    uint256 _proposalId
+) external view returns (uint64[] memory tallies);
+```
+
+Returns an array of length `ballotSize` where each index corresponds to a voting option.
+
+#### `getCurrentEncryptedTallies`
+
+Returns encrypted tally handles during voting (if `allowLiveReveal` is enabled).
+
+```solidity
+function getCurrentEncryptedTallies(
+    uint256 _proposalId
+) external view returns (bytes32[] memory currentEncryptedTallies);
+```
+
+#### `getProposalById`
+
+Returns the configuration of a proposal.
+
+```solidity
+function getProposalById(
+    uint256 _proposalId
+) external view returns (ProposalConfig memory proposal);
+```
+
+### Events
+
+| Event | Parameters | Description |
+| --- | --- | --- |
+| `PDA__ProposalCreated` | `proposalId`, `ballotSize`, `votingPeriod` | New proposal created |
+| `PDA__VoteSubmitted` | `proposalId` | Encrypted vote submitted |
+| `PDA__VotingEnded` | `proposalId` | Voting finalized and tallies decrypted |
+| `PDA__AggregateResultsRevealed` | `proposalId`, `encryptedTallies` | Live encrypted tallies returned |
+| `PDA__FinalResultsRevealed` | `proposalId`, `revealedTallies` | Decrypted final results |
+
+### Errors
+
+| Error | Cause |
+| --- | --- |
+| `PDA__ProposalAlreadyExists` | Proposal ID already in use |
+| `PDA__InvalidBallotSize` | Ballot size is 0 or too large |
+| `PDA__InvalidVotingPeriod` | Voting period is 0 |
+| `PDA__VotingPeriodEnded` | Attempting to vote after deadline |
+| `PDA__VotingPeriodNotEnded` | Attempting to end voting too early |
+| `PDA__NullifierAlreadyUsed` | Double vote detected |
+| `PDA__InvalidMembershipRoot` | Membership root mismatch |
+| `PDA__InvalidVoteData` | Malformed encrypted vote data |
+| `PDA__ResultsNotRevealed` | Querying tallies before decryption |
+| `PDA__Unauthorized` | Caller lacks permission |
+
+## Proof generation types
+
+### VoteSubmissionProofRequest
+
+```typescript
+type VoteSubmissionProofRequest = {
+  proposalId: bigint | number | string;
+  ballotSize: number;              // 1–255
+  vote: number;                    // 0 to ballotSize - 1
+  memberIdentitySecrets: Array<bigint | number | string>;
+  voterIndex: number;              // Index in memberIdentitySecrets
+  circuitPath?: string;            // Path to compiled circuit JSON
+};
+```
+
+### VoteSubmissionProofPayload
+
+```typescript
+type VoteSubmissionProofPayload = {
+  proof: string;            // Hex-encoded Honk proof
+  publicInputs: string[];   // 32-byte padded field elements
+  proposalId: string;
+  ballotSize: number;
+  vote: number;
+  voterIndex: number;
+  identitySecret: string;
+  membershipRoot: string;   // bytes32
+  nullifierHash: string;    // bytes32
+  leafIndex: number;
+  siblingPath: string[];    // bytes32[]
+  circuitInput: object;     // Raw circuit inputs (for debugging)
+};
+```
+
+### Utility functions (proofUtils)
+
+| Function | Signature | Description |
+| --- | --- | --- |
+| `buildMembershipTree` | `(secrets: BigNumberishLike[]) => Promise<MembershipTree>` | Builds a Poseidon2 Merkle tree (height 32) from identity secrets |
+| `computeNullifier` | `(proposalId, identitySecret) => Promise<bigint>` | Computes `poseidon2(proposalId, identitySecret)` |
+| `computeMembershipLeaf` | `(identitySecret) => Promise<bigint>` | Computes `poseidon2(identitySecret)` leaf hash |
+| `poseidonHash` | `(values: BigNumberishLike[]) => Promise<bigint>` | General-purpose Poseidon2 hash |
+| `poseidonPair` | `(left, right) => Promise<bigint>` | Hash two field elements |
+| `toBytes32` | `(value) => string` | Pad a value to 32-byte hex string |
+| `parseBigInt` | `(value) => bigint` | Parse string/number/bigint to bigint |

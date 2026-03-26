@@ -1,0 +1,204 @@
+# Contracts Guide
+
+This guide walks you through integrating Privacy Protocol Cipher into your DAO contract. By the end, you'll have a contract that supports private proposals and anonymous voting.
+
+## Architecture overview
+
+Your DAO contract interacts with the **`PrivateDaoAdapter`** — a pre-deployed contract that handles:
+- Proposal storage with encrypted tallies
+- ZK proof verification for membership
+- Nullifier-based double-vote prevention
+- FHE-encrypted vote aggregation
+- Tally decryption after voting ends
+
+Your contract only needs to import the `IPrivateDaoAdapter` interface and call its functions.
+
+## Step 1: Import the interface
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {IPrivateDaoAdapter} from
+    "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+```
+
+## Step 2: Store a reference to the adapter
+
+```solidity
+contract MyDao {
+    IPrivateDaoAdapter public immutable PROPOSAL_MANAGER;
+
+    constructor(address _proposalManager) {
+        PROPOSAL_MANAGER = IPrivateDaoAdapter(_proposalManager);
+    }
+}
+```
+
+On Sepolia, the pre-deployed `PrivateDaoAdapter` address is:
+
+```
+0x8274C53d82C5874455E67F80603F2792C9757cBE
+```
+
+## Step 3: Create proposals
+
+To create a proposal, call `propose()` with:
+- A unique proposal ID
+- The ballot size (number of voting options)
+- The voting period in seconds
+- Whether live tally reveal is allowed
+- The membership Merkle root
+
+```solidity
+function createProposal(
+    uint256 proposalId,
+    bytes32 membershipRoot
+) external {
+    // ballot size of 3: 0 = Against, 1 = For, 2 = Abstain
+    PROPOSAL_MANAGER.propose(
+        proposalId,
+        3,               // ballotSize
+        7 days,          // votingPeriod
+        false,           // allowLiveReveal
+        membershipRoot   // Merkle root of member identity secrets
+    );
+}
+```
+
+The `membershipRoot` is the root of a Poseidon2 Merkle tree built from your DAO members' identity secrets. See [Proof Generation](/docs/proof-generation) for how to compute this.
+
+## Step 4: Submit votes
+
+Votes are submitted with a ZK proof and encrypted vote data:
+
+```solidity
+function vote(
+    uint256 proposalId,
+    bytes32 nullifierHash,
+    bytes calldata zkProof,
+    bytes calldata voteData
+) external {
+    PROPOSAL_MANAGER.submitEncryptedVote(
+        proposalId,
+        nullifierHash,
+        zkProof,
+        voteData
+    );
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `proposalId` | The ID of the proposal being voted on |
+| `nullifierHash` | `poseidon2(proposalId, identitySecret)` — prevents double voting |
+| `zkProof` | Serialized Honk SNARK proof of membership and ballot validity |
+| `voteData` | ABI-encoded `(bytes32 encryptedVote, bytes voteProof)` — the FHE-encrypted vote |
+
+The contract verifies the ZK proof on-chain, checks the nullifier hasn't been used, and adds the encrypted vote to the tally — all without learning who voted or what they voted for.
+
+## Step 5: End voting and reveal results
+
+After the voting period ends, call `endVoting()` to decrypt the tallies:
+
+```solidity
+function finalizeProposal(
+    uint256 proposalId,
+    bytes calldata abiEncodedResults,
+    bytes calldata decryptionProof
+) external {
+    PROPOSAL_MANAGER.endVoting(proposalId, abiEncodedResults, decryptionProof);
+}
+```
+
+Then read the results:
+
+```solidity
+function getResults(uint256 proposalId) external view returns (uint64[] memory) {
+    return PROPOSAL_MANAGER.getRevealedTallies(proposalId);
+}
+```
+
+The returned array maps to ballot options: `[againstVotes, forVotes, abstainVotes]` for a ballot size of 3.
+
+## Step 6: Generating identity secrets
+
+Each DAO member needs a unique identity secret. A recommended pattern is to derive it deterministically from their wallet:
+
+```typescript
+import { ethers } from "ethers";
+
+async function deriveIdentitySecret(signer: ethers.Signer): Promise<bigint> {
+  // Sign a deterministic message
+  const message = "Privacy Protocol Cipher: Identity Secret Derivation v1";
+  const signature = await signer.signMessage(message);
+
+  // Hash the signature to get a field-compatible secret
+  const hash = ethers.keccak256(signature);
+
+  // Reduce to fit within the BN254 scalar field
+  const BN254_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  return BigInt(hash) % BN254_MODULUS;
+}
+```
+
+This approach is deterministic (same wallet always produces the same secret), requires no storage, and keeps the secret tied to the wallet's private key.
+
+## Complete example
+
+Here's a minimal DAO contract with private voting:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IPrivateDaoAdapter} from
+    "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+
+contract SimplePrivateDao {
+    IERC20 public immutable TOKEN;
+    IPrivateDaoAdapter public immutable PROPOSAL_MANAGER;
+
+    uint256 public proposalCount;
+
+    constructor(address _token, address _proposalManager) {
+        TOKEN = IERC20(_token);
+        PROPOSAL_MANAGER = IPrivateDaoAdapter(_proposalManager);
+    }
+
+    function createProposal(bytes32 membershipRoot) external returns (uint256) {
+        require(TOKEN.balanceOf(msg.sender) >= 1e18, "Must hold tokens");
+
+        proposalCount++;
+        PROPOSAL_MANAGER.propose(
+            proposalCount,
+            3,            // Against, For, Abstain
+            7 days,
+            false,
+            membershipRoot
+        );
+        return proposalCount;
+    }
+
+    function vote(
+        uint256 proposalId,
+        bytes32 nullifierHash,
+        bytes calldata zkProof,
+        bytes calldata voteData
+    ) external {
+        PROPOSAL_MANAGER.submitEncryptedVote(
+            proposalId, nullifierHash, zkProof, voteData
+        );
+    }
+
+    function getResults(uint256 proposalId) external view returns (uint64[] memory) {
+        return PROPOSAL_MANAGER.getRevealedTallies(proposalId);
+    }
+}
+```
+
+## Next steps
+
+- [Proof Generation](/docs/proof-generation) — Generate ZK proofs for voting
+- [Deployment](/docs/deployment) — Deploy your contract to Sepolia or your own network

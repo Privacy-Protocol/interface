@@ -1,0 +1,229 @@
+# Proof Generation
+
+Before a member can vote, they need a ZK proof that demonstrates:
+1. They belong to the DAO (membership in the Merkle tree)
+2. Their vote is within the valid ballot range
+3. Their nullifier is correctly derived (binding them to this specific proposal)
+
+This page covers two approaches: **script-based** (direct TypeScript usage) and **API-based** (HTTP endpoint).
+
+## How the proof works
+
+The Noir circuit takes these inputs:
+
+| Input | Visibility | Purpose |
+| --- | --- | --- |
+| `proposal_id` | Public | Ties the proof to a specific proposal |
+| `membership_root` | Public | The Merkle root stored on-chain |
+| `ballot_size` | Public | Number of valid voting options |
+| `nullifier_hash` | Public | Prevents double voting |
+| `identity_secret` | Private | The voter's secret — never revealed |
+| `vote` | Private | The voter's choice — never revealed |
+| `leaf_index` | Private | Position in the Merkle tree — never revealed |
+| `sibling_path` | Private | Merkle proof path — never revealed |
+
+The circuit proves all constraints hold without revealing any private inputs. The resulting Honk SNARK proof is verified on-chain by the `VoteSubmissionVerifier` contract.
+
+## Approach 1: Script-based (client-side / server-side)
+
+### Setup
+
+Copy the proof generation scripts into your project:
+
+```
+your-project/
+├── scripts/
+│   ├── generateVoteSubmissionProof.ts
+│   └── proofUtils.ts
+├── circuits/
+│   └── target/
+│       └── circuits.json          # Compiled Noir circuit artifact
+└── contracts/
+```
+
+Install the required dependencies:
+
+```bash npm2yarn
+npm install @aztec/bb.js@3.0.0-nightly @noir-lang/noir_js@1.0.0-beta.16 @aztec/foundation ethers
+```
+
+### Building the membership tree
+
+The membership tree is a Poseidon2 Merkle tree (height 32) built from all DAO members' identity secrets:
+
+```typescript
+import { buildMembershipTree } from "./scripts/proofUtils";
+
+// Collect identity secrets from all DAO members
+const memberSecrets = [
+  "0x1234...abcd",  // Member 0's identity secret
+  "0x5678...efgh",  // Member 1's identity secret
+  "0x9abc...ijkl",  // Member 2's identity secret
+  // ... all members
+];
+
+const tree = await buildMembershipTree(memberSecrets);
+
+// tree.membershipRoot — use this when creating proposals on-chain
+// tree.proofs[i]      — membership proof for member at index i
+```
+
+The `membershipRoot` (as `bytes32`) is what you pass to `propose()` on-chain. It must match the tree used for proof generation.
+
+### Generating a vote proof
+
+```typescript
+import { generateVoteSubmissionProof } from "./scripts/generateVoteSubmissionProof";
+import type { VoteSubmissionProofRequest } from "./scripts/generateVoteSubmissionProof";
+
+const request: VoteSubmissionProofRequest = {
+  proposalId: 1,
+  ballotSize: 3,                    // 0: Against, 1: For, 2: Abstain
+  vote: 1,                          // Voting "For"
+  memberIdentitySecrets: memberSecrets,  // All member secrets (to rebuild tree)
+  voterIndex: 0,                    // This voter's index in the member list
+  circuitPath: "./circuits/target/circuits.json",  // Optional, defaults to relative path
+};
+
+const payload = await generateVoteSubmissionProof(request);
+
+// Use these values when calling submitEncryptedVote on-chain:
+// payload.proof         — the serialized Honk proof (hex)
+// payload.publicInputs  — array of 32-byte field elements
+// payload.nullifierHash — the nullifier to pass on-chain
+```
+
+### Request parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `proposalId` | `bigint \| number \| string` | The on-chain proposal ID |
+| `ballotSize` | `number` | Number of voting options (1–255) |
+| `vote` | `number` | The voter's choice (must be < `ballotSize`) |
+| `memberIdentitySecrets` | `Array` | All member identity secrets for tree construction |
+| `voterIndex` | `number` | Index of the voter in the secrets array |
+| `circuitPath` | `string?` | Path to compiled circuit JSON (optional) |
+
+### Response payload
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `proof` | `string` | Hex-encoded Honk SNARK proof |
+| `publicInputs` | `string[]` | 32-byte padded public input field elements |
+| `nullifierHash` | `string` | Bytes32 nullifier for on-chain submission |
+| `membershipRoot` | `string` | Bytes32 Merkle root (should match on-chain) |
+| `proposalId` | `string` | Echoed proposal ID |
+| `ballotSize` | `number` | Echoed ballot size |
+| `vote` | `number` | Echoed vote value |
+
+## Approach 2: API-based (HTTP endpoint)
+
+### Using the hosted proof service
+
+Send a POST request to the proof generation API:
+
+```typescript
+const response = await fetch("https://api.privacyprotocol.io/api/cipher/proof", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    proposalId: 1,
+    ballotSize: 3,
+    vote: 1,
+    memberIdentitySecrets: memberSecrets,
+    voterIndex: 0,
+  }),
+});
+
+const { proof, publicInputs, nullifierHash } = await response.json();
+```
+
+### Self-hosting the proof API
+
+You can run the proof generation endpoint in your own Next.js backend. Create an API route:
+
+```typescript
+// app/api/proof/route.ts
+import { NextResponse } from "next/server";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const encoded = Buffer.from(JSON.stringify(body)).toString("base64");
+
+  const { stdout } = await execAsync(
+    `npx tsx scripts/generateVoteSubmissionProof.ts ${encoded}`
+  );
+
+  const payload = JSON.parse(stdout);
+
+  // ABI-encode the proof for on-chain submission
+  return NextResponse.json({
+    proof: payload.proof,
+    publicInputs: payload.publicInputs,
+    nullifierHash: payload.nullifierHash,
+    membershipRoot: payload.membershipRoot,
+  });
+}
+```
+
+Make sure the `circuits/target/circuits.json` artifact and the proof scripts are accessible from your API server.
+
+## End-to-end example
+
+Here's a complete flow from identity derivation to on-chain vote submission:
+
+```typescript
+import { ethers } from "ethers";
+import { generateVoteSubmissionProof } from "./scripts/generateVoteSubmissionProof";
+import { buildMembershipTree, toBytes32 } from "./scripts/proofUtils";
+
+// 1. Derive identity secret from wallet
+async function deriveIdentitySecret(signer: ethers.Signer): Promise<bigint> {
+  const message = "Privacy Protocol Cipher: Identity Secret Derivation v1";
+  const signature = await signer.signMessage(message);
+  const hash = ethers.keccak256(signature);
+  const BN254_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+  return BigInt(hash) % BN254_MODULUS;
+}
+
+// 2. Collect all member secrets and build the tree
+const allMemberSecrets = [
+  await deriveIdentitySecret(member0Signer),
+  await deriveIdentitySecret(member1Signer),
+  await deriveIdentitySecret(member2Signer),
+];
+
+const tree = await buildMembershipTree(allMemberSecrets);
+
+// 3. Create proposal on-chain (done once by the proposer)
+const membershipRoot = toBytes32(tree.membershipRoot);
+const tx1 = await daoContract.createProposal(proposalId, membershipRoot);
+await tx1.wait();
+
+// 4. Generate proof for a specific voter
+const proof = await generateVoteSubmissionProof({
+  proposalId: 1,
+  ballotSize: 3,
+  vote: 1,             // Voting "For"
+  memberIdentitySecrets: allMemberSecrets,
+  voterIndex: 0,       // Voter is member 0
+});
+
+// 5. Submit vote on-chain
+const tx2 = await daoContract.vote(
+  proposalId,
+  proof.nullifierHash,
+  proof.proof,
+  voteData             // ABI-encoded FHE-encrypted vote
+);
+await tx2.wait();
+```
+
+## Next steps
+
+- [Deployment](/docs/deployment) — Deploy your DAO contract
+- [API Reference](/docs/api-reference) — Full interface and type reference

@@ -1,0 +1,80 @@
+# Installation
+
+## Add Cipher contracts to your Hardhat project
+
+```bash npm2yarn
+npm install @privacy-protocol/cipher-contracts @fhevm/solidity @openzeppelin/contracts
+```
+
+This installs:
+- `@privacy-protocol/cipher-contracts` — The Cipher Solidity contracts
+- `@fhevm/solidity` — Zama's FHE library (peer dependency)
+- `@openzeppelin/contracts` — OpenZeppelin utilities (peer dependency)
+
+## Hardhat configuration
+
+Update your `hardhat.config.ts` to support FHEVM and the required Solidity version:
+
+```typescript
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@fhevm/hardhat-plugin";
+
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.8.27",
+    settings: {
+      optimizer: { enabled: true, runs: 10 },
+      evmVersion: "cancun",
+    },
+  },
+  networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+  },
+};
+
+export default config;
+```
+
+Install the Hardhat plugin if you haven't already:
+
+```bash npm2yarn
+npm install --save-dev @fhevm/hardhat-plugin @nomicfoundation/hardhat-toolbox
+```
+
+## Install proof generation dependencies (optional)
+
+If your application needs to generate ZK proofs (for submitting votes), install the proof generation stack:
+
+```bash npm2yarn
+npm install @aztec/bb.js@3.0.0-nightly @noir-lang/noir_js@1.0.0-beta.16 @aztec/foundation ethers
+```
+
+## Verify installation
+
+Create a simple contract to verify everything compiles:
+
+```solidity
+// contracts/TestImport.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {IPrivateDaoAdapter} from "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+
+contract TestImport {
+    IPrivateDaoAdapter public adapter;
+
+    constructor(address _adapter) {
+        adapter = IPrivateDaoAdapter(_adapter);
+    }
+}
+```
+
+```bash
+npx hardhat compile
+```
+
+If it compiles without errors, you're ready to go. Delete `TestImport.sol` and proceed to the [Contracts Guide](/docs/contracts).

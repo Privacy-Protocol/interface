@@ -1,0 +1,52 @@
+# Privacy Protocol Cipher
+
+Privacy Protocol Cipher is a privacy middleware toolkit for building confidential decentralized applications on EVM blockchains. It combines **Zero-Knowledge proofs** (Noir) and **Fully Homomorphic Encryption** (Zama FHEVM) to enable private, verifiable on-chain logic.
+
+## What it does
+
+Cipher lets you build applications where sensitive data — like votes, bids, or balances — stays encrypted on-chain while still being provably correct. No one can see individual values, but everyone can verify the aggregate results.
+
+## How it works
+
+Cipher uses two complementary cryptographic primitives:
+
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| **Zero-Knowledge Proofs** | Noir + Honk SNARK | Prove membership, ballot validity, and nullifier correctness without revealing identity |
+| **Fully Homomorphic Encryption** | Zama FHEVM | Encrypt votes on-chain; tally encrypted values without decrypting individual ones |
+
+### The flow
+
+1. **Membership proof** — A Noir circuit proves the voter belongs to the DAO without revealing which member they are
+2. **Encrypted vote** — The vote is FHE-encrypted before submission; even the contract cannot see individual votes
+3. **Nullifier** — A deterministic hash ties each voter to each proposal exactly once, preventing double voting
+4. **Homomorphic tallying** — The contract adds encrypted votes together without decrypting them
+5. **Final reveal** — When voting ends, the aggregate tally is decrypted via KMS, revealing only totals
+
+## Available toolkits
+
+### DAO Toolkit (available now)
+
+The DAO Toolkit provides private governance primitives:
+
+- **`PrivateDaoAdapter`** — Core adapter contract for private proposals and voting
+- **`IPrivateDaoAdapter`** — Interface for integrating into your own DAO contracts
+- **`VoteSubmissionVerifier`** — On-chain Honk SNARK verifier for membership proofs
+- **Proof generation scripts** — TypeScript utilities for generating ZK proofs client-side or server-side
+
+### Coming soon
+
+Additional privacy toolkits for other use cases (private auctions, confidential transfers, etc.) are planned. The modular architecture means each toolkit can be adopted independently.
+
+## Supported networks
+
+- **Sepolia testnet** — Pre-deployed contracts available now
+- **Ethereum mainnet** — Coming soon
+- **L2 networks** — Support for major L2s is planned
+- **Starknet & Solana** — Cross-chain expansion on the roadmap
+
+## Next steps
+
+- [Prerequisites](/docs/prerequisites) — Tools and knowledge you'll need
+- [Installation](/docs/installation) — Add Cipher to your Hardhat project
+- [Contracts Guide](/docs/contracts) — Integrate private voting into your DAO
