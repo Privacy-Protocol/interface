@@ -1,78 +1,74 @@
-import { motion } from "framer-motion"
-import { SectionHeading } from "../ui/section-heading"
-import { cn } from "@/lib/utils"
-import { Button } from "../ui/button"
-import Link from "next/link"
-import { ArrowRightIcon } from "../ui/icons"
+"use client"
 
-interface Props {
-  reveal: TReveal
-  productsData: TProductCard[]
-}
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { reveal } from "./landing-page"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { CIPHER_TOOLKITS } from "./products-section/data"
+import { CipherTab } from "./products-section/cipher-tab"
+import { CloakTab } from "./products-section/cloak-tab"
 
-export function ProductsSection({ reveal, productsData }: Props) {
+export function ProductsSection() {
+  const [activeToolkit, setActiveToolkit] = useState<string>(
+    CIPHER_TOOLKITS[0].id
+  )
+
   return (
-    <motion.section {...reveal} id="products" className="px-4 py-14 sm:px-6">
-      <div className="mx-auto max-w-6xl">
-        <SectionHeading
-          eyebrow="Products"
-          title="Two privacy tool lines"
-          description="Different layers, one composable developer experience."
-        />
-
-        <div className="mt-8 grid gap-4 lg:grid-cols-12">
-          {productsData.map((product) => (
-            <motion.article
-              key={product.name}
-              className={cn(
-                "group relative flex min-h-[320px] flex-col overflow-hidden border bg-card/70 p-5 backdrop-blur-sm lg:col-span-12",
-                product.span,
-                product.tone === "primary"
-                  ? "border-primary/40"
-                  : "border-accent/40"
-              )}
-              style={{ borderRadius: 12 }}
-              whileHover={{ y: -4, scale: 1.01, borderRadius: 22 }}
-              transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <h3 className="text-2xl font-semibold text-zinc-50">
-                {product.name}
-              </h3>
-              <p className="mt-2 text-sm text-zinc-300">
-                {product.description}
-              </p>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {product.useCases.map((useCase) => (
-                  <p
-                    key={useCase}
-                    className="border border-border/70 bg-muted/45 px-2.5 py-2 text-xs tracking-[0.12em] text-zinc-200 uppercase"
-                  >
-                    {useCase}
-                  </p>
-                ))}
-              </div>
-
-              <Button
-                asChild
-                className={cn(
-                  "mt-auto h-9 border bg-transparent px-4 text-[0.62rem] tracking-[0.2em] uppercase",
-                  product.tone === "primary"
-                    ? "border-primary/55 text-primary hover:bg-primary/15"
-                    : "border-accent/55 text-accent hover:bg-accent/15"
-                )}
-              >
-                <Link
-                  href={product.href}
-                  className="inline-flex items-center gap-1.5"
-                >
-                  Visit {product.name}
-                  <ArrowRightIcon />
-                </Link>
-              </Button>
-            </motion.article>
-          ))}
+    <motion.section
+      {...reveal}
+      id="products"
+      className="relative px-4 py-20 sm:px-6 sm:py-28"
+    >
+      <div className="mx-auto max-w-5xl">
+        <div className="flex items-center gap-3">
+          <span className="font-code text-[0.6rem] tracking-[0.25em] text-primary uppercase">
+            {">_ Products"}
+          </span>
+          <span className="h-px flex-1 bg-border/60" />
         </div>
+
+        <h2 className="mt-4 max-w-5xl font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Privacy for every app
+          <br />
+          <span className="text-accent">
+            toolkits tailored for your specific app needs
+          </span>
+        </h2>
+
+        <Tabs defaultValue="cipher" className="mt-10">
+          <TabsList
+            variant="line"
+            className="mb-6 w-full justify-start gap-0 border-b border-border/20 p-0 sm:w-auto"
+          >
+            <TabsTrigger
+              value="cipher"
+              className="relative rounded-none border-none bg-transparent px-4 py-2.5 font-code text-[0.65rem] tracking-[0.15em] uppercase transition-colors data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:after:bg-primary"
+            >
+              <span className="mr-1.5 inline-flex size-1.5 rounded-full bg-primary/60" />
+              Cipher
+            </TabsTrigger>
+            <TabsTrigger
+              value="cloak"
+              className="relative rounded-none border-none bg-transparent px-4 py-2.5 font-code text-[0.65rem] tracking-[0.15em] uppercase transition-colors data-[state=active]:bg-transparent data-[state=active]:text-accent data-[state=active]:after:bg-accent"
+            >
+              <span className="mr-1.5 inline-flex size-1.5 rounded-full bg-accent/40" />
+              Cloak
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="cipher" className="mt-0 outline-none">
+            <CipherTab
+              activeToolkit={activeToolkit}
+              onSelectToolkit={setActiveToolkit}
+            />
+          </TabsContent>
+
+          <TabsContent value="cloak" className="mt-0 outline-none">
+            <AnimatePresence mode="wait">
+              <CloakTab />
+            </AnimatePresence>
+          </TabsContent>
+        </Tabs>
       </div>
     </motion.section>
   )

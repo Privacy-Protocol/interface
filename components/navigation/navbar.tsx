@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { ListIcon, XIcon } from "@phosphor-icons/react"
+import { List, X } from "@phosphor-icons/react"
 import { useEffect, useState } from "react"
 
 import {
@@ -15,13 +15,29 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
 import { PAGE_LINKS } from "@/lib/constants"
+import Image from "next/image"
 
-const groups = [
+type NavItem = {
+  title: string
+  description: string
+  href: string
+  external?: boolean
+}
+
+const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Solutions",
     items: [
-      { title: "Cipher", description: "Private Data", href: PAGE_LINKS.CIPHER },
-      { title: "Cloak", description: "Hidden Actors", href: PAGE_LINKS.CLOAK },
+      {
+        title: "Cipher",
+        description: "Confidential data & actions",
+        href: PAGE_LINKS.CIPHER,
+      },
+      {
+        title: "Cloak",
+        description: "Actor privacy & shielding",
+        href: PAGE_LINKS.CLOAK,
+      },
     ],
   },
   {
@@ -29,12 +45,12 @@ const groups = [
     items: [
       {
         title: "Docs",
-        description: "Guides and references",
+        description: "Guides & API reference",
         href: PAGE_LINKS.DOCS,
       },
       {
         title: "GitHub",
-        description: "Code and examples",
+        description: "Source code & examples",
         href: PAGE_LINKS.GITHUB,
         external: true,
       },
@@ -45,7 +61,7 @@ const groups = [
     items: [
       {
         title: "Blog",
-        description: "Updates and releases",
+        description: "Updates & releases",
         href: PAGE_LINKS.BLOG,
       },
       {
@@ -63,9 +79,8 @@ export function Navbar() {
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 8)
+      setScrolled(window.scrollY > 12)
     }
-
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -73,44 +88,46 @@ export function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 border-b border-border/60 bg-background/86 backdrop-blur-md" />
       <motion.div
         animate={{
           backgroundColor: scrolled
-            ? "rgba(8,11,18,0.9)"
-            : "rgba(8,11,18,0.82)",
+            ? "oklch(0.09 0.025 145 / 0.92)"
+            : "oklch(0.09 0.025 145 / 0.6)",
           borderColor: scrolled
-            ? "rgba(34,197,94,0.35)"
-            : "rgba(255,255,255,0.14)",
-          boxShadow: scrolled
-            ? "0 14px 34px -26px rgba(0,0,0,0.85)"
-            : "0 10px 28px -24px rgba(0,0,0,0.8)",
+            ? "oklch(0.82 0.28 142 / 0.12)"
+            : "oklch(0.2 0.018 145 / 0.4)",
         }}
-        transition={{ duration: 0.25 }}
-        className="relative mx-auto mt-3 max-w-7xl border backdrop-blur-md"
+        transition={{ duration: 0.3 }}
+        className="mx-auto mt-3 max-w-5xl rounded-lg border backdrop-blur-xl sm:mt-4"
       >
-        <div className="flex h-16 items-center justify-between px-4 sm:px-5">
-          <Link
-            href="/"
-            className="group flex items-center gap-3 text-[0.66rem] tracking-[0.2em] text-zinc-100 uppercase"
-          >
-            <span className="relative inline-flex size-6 items-center justify-center border border-primary/60 bg-primary/10">
-              <span className="size-2.5 bg-primary shadow-[0_0_14px_0_rgba(34,197,94,0.85)]" />
-            </span>
-            <span className="font-semibold tracking-[0.16em]">
-              Privacy Protocol
-            </span>
+        <div className="flex h-14 items-center justify-between px-4 sm:px-5">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <Image
+              src={"/PP-Logo-MG+WS.png"}
+              alt="privacy protocol logo"
+              width={100}
+              height={50}
+              className="block group-hover:hidden"
+            />
+            <Image
+              src={"/PP-Logo-FL+WS.png"}
+              alt="privacy protocol logo"
+              width={100}
+              height={50}
+              className="hidden group-hover:block"
+            />
           </Link>
 
+          {/* Desktop navigation */}
           <NavigationMenu viewport={false} className="hidden md:flex">
-            <NavigationMenuList className="gap-1">
+            <NavigationMenuList className="gap-0.5">
               {groups.map((group) => (
                 <NavigationMenuItem key={group.label}>
-                  <NavigationMenuTrigger className="border border-transparent bg-transparent px-2.5 text-xs tracking-[0.15em] text-zinc-300 uppercase hover:border-primary/40 hover:bg-primary/10 hover:text-zinc-100">
+                  <NavigationMenuTrigger className="rounded-md border border-transparent bg-transparent px-2.5 py-1.5 font-code text-[0.6rem] tracking-[0.15em] text-muted-foreground uppercase transition-colors hover:border-border/40 hover:bg-card/40 hover:text-foreground/80 data-[state=open]:border-border/40 data-[state=open]:bg-card/40">
                     {group.label}
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent className="w-[320px] border border-primary/35 bg-card/95 p-1.5">
-                    <ul className="grid gap-1">
+                  <NavigationMenuContent className="w-[280px] rounded-lg border border-border/50 bg-card/95 p-1.5 shadow-xl backdrop-blur-xl">
+                    <ul className="grid gap-0.5">
                       {group.items.map((item) => (
                         <li key={item.title}>
                           <NavigationMenuLink asChild>
@@ -118,12 +135,12 @@ export function Navbar() {
                               href={item.href}
                               target={item.external ? "_blank" : undefined}
                               rel={item.external ? "noreferrer" : undefined}
-                              className="flex flex-col items-start border border-transparent p-2.5 hover:border-primary/35 hover:bg-primary/10"
+                              className="flex flex-col items-start rounded-md border border-transparent p-2.5 transition-colors hover:border-border/30 hover:bg-card/60"
                             >
-                              <span className="text-xs tracking-[0.14em] text-zinc-100 uppercase">
+                              <span className="text-xs font-medium text-foreground/85">
                                 {item.title}
                               </span>
-                              <span className="text-[0.7rem] text-muted-foreground">
+                              <span className="font-code text-[0.58rem] text-muted-foreground/60">
                                 {item.description}
                               </span>
                             </Link>
@@ -137,63 +154,63 @@ export function Navbar() {
             </NavigationMenuList>
           </NavigationMenu>
 
+          {/* Desktop CTA */}
           <div className="hidden md:block">
-            <Button
-              asChild
-              className="h-9 border border-primary/60 bg-primary/14 px-4 text-[0.65rem] tracking-[0.2em] text-primary uppercase hover:bg-primary/22"
-            >
-              <Link href="/contact">Contact Us</Link>
+            <Button asChild>
+              <Link href={PAGE_LINKS.DOCS}>Start Building</Link>
             </Button>
           </div>
 
+          {/* Mobile menu button */}
           <Button
             variant="ghost"
             size="icon"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((value) => !value)}
-            className="h-9 w-9 border border-border/80 bg-card/70 text-zinc-100 hover:border-primary/60 hover:bg-primary/10 md:hidden"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="size-8 rounded-md border border-border/40 bg-card/40 text-foreground/70 hover:border-border/70 hover:text-foreground md:hidden"
           >
             {mobileOpen ? (
-              <XIcon className="size-4" />
+              <X className="size-4" weight="bold" />
             ) : (
-              <ListIcon className="size-4" />
+              <List className="size-4" weight="bold" />
             )}
           </Button>
         </div>
 
+        {/* Mobile menu */}
         <AnimatePresence>
-          {mobileOpen ? (
+          {mobileOpen && (
             <motion.nav
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.22 }}
-              className="overflow-hidden border-t border-border/80 md:hidden"
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden border-t border-border/30 md:hidden"
             >
-              <div className="space-y-3 p-4">
+              <div className="space-y-2 p-4">
                 {groups.map((group) => (
                   <div
                     key={group.label}
-                    className="border border-border/70 bg-card/60 p-3"
+                    className="rounded-md border border-border/30 bg-card/30 p-3"
                   >
-                    <p className="text-[0.62rem] tracking-[0.18em] text-primary uppercase">
+                    <p className="font-code text-[0.5rem] tracking-[0.2em] text-primary/60 uppercase">
                       {group.label}
                     </p>
-                    <div className="mt-2 space-y-1.5">
+                    <div className="mt-2 space-y-1">
                       {group.items.map((item) => (
                         <Link
                           key={item.title}
                           href={item.href}
                           target={item.external ? "_blank" : undefined}
                           rel={item.external ? "noreferrer" : undefined}
-                          className="block border border-transparent px-2 py-1.5 text-sm text-zinc-200 hover:border-primary/40 hover:bg-primary/10"
+                          className="block rounded-md px-2.5 py-2 transition-colors hover:bg-card/60"
                           onClick={() => setMobileOpen(false)}
                         >
-                          <p className="text-xs tracking-[0.14em] uppercase">
+                          <p className="text-xs font-medium text-foreground/85">
                             {item.title}
                           </p>
-                          <p className="text-[0.7rem] text-muted-foreground">
+                          <p className="font-code text-[0.55rem] text-muted-foreground/50">
                             {item.description}
                           </p>
                         </Link>
@@ -203,15 +220,18 @@ export function Navbar() {
                 ))}
                 <Button
                   asChild
-                  className="h-9 w-full border border-primary/60 bg-primary/14 text-[0.65rem] tracking-[0.2em] text-primary uppercase hover:bg-primary/22"
+                  className="h-9 w-full rounded-md border border-primary/25 bg-primary/8 font-code text-[0.58rem] tracking-[0.18em] text-primary/80 uppercase hover:bg-primary/14"
                 >
-                  <Link href="/contact" onClick={() => setMobileOpen(false)}>
-                    Contact Us
+                  <Link
+                    href={PAGE_LINKS.DOCS}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Start Building
                   </Link>
                 </Button>
               </div>
             </motion.nav>
-          ) : null}
+          )}
         </AnimatePresence>
       </motion.div>
     </header>

@@ -116,3 +116,18 @@ type ActiveProposal = {
   descriptor: ProposalDescriptor
   core: ProposalCoreView
 }
+
+type ToolkitStatus = "available" | "preview" | "coming-soon"
+
+interface CipherToolkit {
+  id: string
+  name: string
+  status: ToolkitStatus
+  icon: React.ElementType
+  summary: string
+  description: string
+  primitives: string[]
+  features: string[]
+  useCases: string[]
+  href?: string
+}

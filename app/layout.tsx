@@ -1,28 +1,66 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google"
+import { IBM_Plex_Mono } from "next/font/google"
+import localFont from "next/font/local"
 
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
+const fontHeading = localFont({
+  src: "../public/fonts/Tutankhamono-Bold.ttf",
+  variable: "--font-heading",
 })
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
+const fontBody = localFont({
+  src: [
+    {
+      path: "../public/fonts/OverusedGrotesk-Black.ttf",
+      weight: "900",
+      style: "black",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-ExtraBold.ttf",
+      weight: "800",
+      style: "extrabold",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-Bold.ttf",
+      weight: "700",
+      style: "bold",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-SemiBold.ttf",
+      weight: "600",
+      style: "semibold",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-Medium.ttf",
+      weight: "500",
+      style: "medium",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-Roman.ttf",
+      weight: "400",
+      style: "regular",
+    },
+    {
+      path: "../public/fonts/OverusedGrotesk-Light.ttf",
+      weight: "300",
+      style: "light",
+    },
+  ],
+  variable: "--font-body",
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const fontCode = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-code",
 })
 
 export const metadata: Metadata = {
   title: "Privacy Protocol",
-  description: "Privacy Middleware",
+  description:
+    "Developer tools for building confidential web3 applications. Zero-knowledge proofs and fully homomorphic encryption, abstracted.",
 }
 
 export default function RootLayout({
@@ -36,16 +74,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "antialiased",
-        fontSans.variable,
-        geistMono.variable,
-        jetbrainsMono.variable
+        fontHeading.variable,
+        fontCode.variable,
+        fontBody.variable
       )}
     >
-      <body>
-        <ThemeProvider forcedTheme="dark" disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
-      </body>
+      <body className="bg-background">{children}</body>
     </html>
   )
 }
