@@ -2,7 +2,14 @@
 
 import Link from "next/link"
 import { AnimatePresence, motion } from "framer-motion"
-import { List, X } from "@phosphor-icons/react"
+import {
+  DiscordLogoIcon,
+  GithubLogoIcon,
+  List,
+  TelegramLogoIcon,
+  X,
+  XLogoIcon,
+} from "@phosphor-icons/react"
 import { useEffect, useState } from "react"
 
 import {
@@ -15,14 +22,8 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
 import { PAGE_LINKS } from "@/lib/constants"
+import { cn } from "@/lib/utils"
 import Image from "next/image"
-
-type NavItem = {
-  title: string
-  description: string
-  href: string
-  external?: boolean
-}
 
 const groups: { label: string; items: NavItem[] }[] = [
   {
@@ -50,7 +51,7 @@ const groups: { label: string; items: NavItem[] }[] = [
       },
       {
         title: "GitHub",
-        description: "Source code & examples",
+        description: "Source code, examples and contribute",
         href: PAGE_LINKS.GITHUB,
         external: true,
       },
@@ -73,6 +74,35 @@ const groups: { label: string; items: NavItem[] }[] = [
   },
 ]
 
+const socials = [
+  {
+    href: PAGE_LINKS.TWITTER,
+    icon: <XLogoIcon className="size-5 text-primary group-hover:text-accent" />,
+    label: "X",
+  },
+  {
+    href: PAGE_LINKS.TELEGRAM,
+    icon: (
+      <TelegramLogoIcon className="size-5 text-primary group-hover:text-accent" />
+    ),
+    label: "Telegram",
+  },
+  {
+    href: PAGE_LINKS.DISCORD,
+    icon: (
+      <DiscordLogoIcon className="size-5 text-primary group-hover:text-accent" />
+    ),
+    label: "Discord",
+  },
+  {
+    href: PAGE_LINKS.GITHUB,
+    icon: (
+      <GithubLogoIcon className="size-5 text-primary group-hover:text-accent" />
+    ),
+    label: "GitHub",
+  },
+]
+
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -87,20 +117,17 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-foreground/10 bg-secondary">
       <motion.div
         animate={{
-          backgroundColor: scrolled
-            ? "oklch(0.09 0.025 145 / 0.92)"
-            : "oklch(0.09 0.025 145 / 0.6)",
           borderColor: scrolled
-            ? "oklch(0.82 0.28 142 / 0.12)"
-            : "oklch(0.2 0.018 145 / 0.4)",
+            ? "oklch(0.82 0.28 142 / 0.15)"
+            : "oklch(0.2 0.018 145 / 0.35)",
         }}
         transition={{ duration: 0.3 }}
-        className="mx-auto mt-3 max-w-5xl rounded-lg border backdrop-blur-xl sm:mt-4"
+        className="w-full border-b border-border/40 backdrop-blur-xl"
       >
-        <div className="flex h-14 items-center justify-between px-4 sm:px-5">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-5">
           <Link href="/" className="group flex items-center gap-2.5">
             <Image
               src={"/PP-Logo-MG+WS.png"}
@@ -118,15 +145,19 @@ export function Navbar() {
             />
           </Link>
 
-          {/* Desktop navigation */}
           <NavigationMenu viewport={false} className="hidden md:flex">
-            <NavigationMenuList className="gap-0.5">
+            <NavigationMenuList>
               {groups.map((group) => (
                 <NavigationMenuItem key={group.label}>
-                  <NavigationMenuTrigger className="rounded-md border border-transparent bg-transparent px-2.5 py-1.5 font-code text-[0.6rem] tracking-[0.15em] text-muted-foreground uppercase transition-colors hover:border-border/40 hover:bg-card/40 hover:text-foreground/80 data-[state=open]:border-border/40 data-[state=open]:bg-card/40">
-                    {group.label}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent className="w-[280px] rounded-lg border border-border/50 bg-card/95 p-1.5 shadow-xl backdrop-blur-xl">
+                  <NavigationMenuTrigger>{group.label}</NavigationMenuTrigger>
+                  <NavigationMenuContent
+                    className={cn(
+                      group.label === "Developer" &&
+                        "md:right-auto md:left-1/2 md:-translate-x-1/2",
+                      group.label === "Resources" &&
+                        "md:right-0 md:left-auto md:translate-x-0"
+                    )}
+                  >
                     <ul className="grid gap-0.5">
                       {group.items.map((item) => (
                         <li key={item.title}>
@@ -135,12 +166,11 @@ export function Navbar() {
                               href={item.href}
                               target={item.external ? "_blank" : undefined}
                               rel={item.external ? "noreferrer" : undefined}
-                              className="flex flex-col items-start rounded-md border border-transparent p-2.5 transition-colors hover:border-border/30 hover:bg-card/60"
                             >
-                              <span className="text-xs font-medium text-foreground/85">
+                              <span className="text-sm font-medium text-foreground">
                                 {item.title}
                               </span>
-                              <span className="font-code text-[0.58rem] text-muted-foreground/60">
+                              <span className="font-code text-xs text-muted-foreground">
                                 {item.description}
                               </span>
                             </Link>
@@ -154,11 +184,25 @@ export function Navbar() {
             </NavigationMenuList>
           </NavigationMenu>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:block">
-            <Button asChild>
-              <Link href={PAGE_LINKS.DOCS}>Start Building</Link>
-            </Button>
+          <div className="hidden items-center gap-1 md:flex">
+            {socials.map((social) => (
+              <Button
+                key={social.label}
+                size="icon-lg"
+                variant={"ghost"}
+                className="group hover:bg-muted-secondary"
+                asChild
+              >
+                <Link
+                  href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={social.label}
+                >
+                  {social.icon}
+                </Link>
+              </Button>
+            ))}
           </div>
 
           {/* Mobile menu button */}
@@ -194,23 +238,23 @@ export function Navbar() {
                     key={group.label}
                     className="rounded-md border border-border/30 bg-card/30 p-3"
                   >
-                    <p className="font-code text-[0.5rem] tracking-[0.2em] text-primary/60 uppercase">
+                    <p className="font-code text-xs tracking-[0.2em] text-muted-primary uppercase">
                       {group.label}
                     </p>
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-2">
                       {group.items.map((item) => (
                         <Link
                           key={item.title}
                           href={item.href}
                           target={item.external ? "_blank" : undefined}
                           rel={item.external ? "noreferrer" : undefined}
-                          className="block rounded-md px-2.5 py-2 transition-colors hover:bg-card/60"
+                          className="block rounded-md rounded-b-none px-2.5 py-2 transition-colors first:border-b first:border-muted-secondary hover:bg-card/60"
                           onClick={() => setMobileOpen(false)}
                         >
-                          <p className="text-xs font-medium text-foreground/85">
+                          <p className="text-sm font-medium text-foreground">
                             {item.title}
                           </p>
-                          <p className="font-code text-[0.55rem] text-muted-foreground/50">
+                          <p className="font-code text-xs text-muted-foreground">
                             {item.description}
                           </p>
                         </Link>
@@ -218,17 +262,27 @@ export function Navbar() {
                     </div>
                   </div>
                 ))}
-                <Button
-                  asChild
-                  className="h-9 w-full rounded-md border border-primary/25 bg-primary/8 font-code text-[0.58rem] tracking-[0.18em] text-primary/80 uppercase hover:bg-primary/14"
-                >
-                  <Link
-                    href={PAGE_LINKS.DOCS}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Start Building
-                  </Link>
-                </Button>
+
+                <div className="mt-6 mb-4 flex items-center justify-center gap-4">
+                  {socials.map((social) => (
+                    <Button
+                      key={social.label}
+                      size="icon-lg"
+                      variant={"ghost"}
+                      className="group hover:bg-muted-secondary"
+                      asChild
+                    >
+                      <Link
+                        href={social.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={social.label}
+                      >
+                        {social.icon}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </motion.nav>
           )}

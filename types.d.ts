@@ -131,3 +131,10 @@ interface CipherToolkit {
   useCases: string[]
   href?: string
 }
+
+type NavItem = {
+  title: string
+  description: string
+  href: string
+  external?: boolean
+}
