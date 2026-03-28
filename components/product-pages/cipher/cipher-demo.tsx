@@ -290,10 +290,10 @@ This wallet likely is not the proposal tally authority.`,
   if (!isConnected || chainId !== sepolia.id) {
     return (
       <div className="space-y-4">
-        <div className="border border-primary/20 bg-black/40 p-4">
-          <p className="text-sm text-zinc-200">{statusMessage}</p>
+        <div className="rounded-lg border border-border/30 bg-card/25 p-4">
+          <p className="text-sm text-foreground/85">{statusMessage}</p>
           {isConnected && chainId !== sepolia.id ? (
-            <p className="mt-2 font-mono text-xs text-amber-300">
+            <p className="mt-2 font-code text-xs text-accent">
               Switch to Ethereum Sepolia to use the DAO voting demo.
             </p>
           ) : null}
@@ -305,29 +305,29 @@ This wallet likely is not the proposal tally authority.`,
   return (
     <div className="space-y-4">
       {activeProposals.length === 0 ? (
-        <div className="border border-dashed border-primary/25 bg-black/30 p-6 text-center">
-          <p className="text-xs tracking-[0.16em] text-primary/80 uppercase">
+        <div className="rounded-lg border border-dashed border-border/40 bg-card/20 p-6 text-center">
+          <p className="font-code text-[0.6rem] tracking-[0.18em] text-primary/80 uppercase">
             No Active Proposals
           </p>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-zinc-300">
+          <p className="mx-auto mt-3 max-w-lg text-sm text-muted-foreground">
             There are currently no active proposals on DemoDao2. Add a proposal
             on Etherscan, then refresh this panel.
           </p>
           <Button
             onClick={() => void refreshDemoState()}
             disabled={isBusy}
-            className="mt-4 h-9 border border-primary/20 bg-black/40 text-[0.64rem] tracking-[0.18em] text-zinc-200 uppercase hover:bg-black/50"
+            className="mt-4"
           >
             Refresh Proposals
           </Button>
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between border border-primary/20 bg-black/40 p-4">
-            <p className="text-xs tracking-[0.16em] text-primary/80 uppercase">
+          <div className="flex items-center justify-between rounded-lg border border-border/30 bg-card/25 p-4">
+            <p className="font-code text-[0.6rem] tracking-[0.18em] text-primary/80 uppercase">
               Active Proposal
             </p>
-            <p className="mt-2 text-sm text-zinc-200">
+            <p className="mt-2 text-sm text-foreground/85">
               {activeProposals[0]
                 ? proposalLabel(activeProposals[0])
                 : "No proposal"}
@@ -345,10 +345,10 @@ This wallet likely is not the proposal tally authority.`,
                 type="button"
                 onClick={() => setChoice(option.value)}
                 className={cn(
-                  "flex w-full items-center justify-between border px-3 py-2 text-sm transition-colors",
+                  "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
                   choice === option.value
-                    ? "border-primary/60 bg-primary/12 text-zinc-100"
-                    : "border-primary/20 bg-card/70 text-zinc-300 hover:border-primary/40"
+                    ? "border-primary/60 bg-primary/12 text-foreground"
+                    : "border-border/30 bg-card/25 text-muted-foreground hover:border-primary/40 hover:text-foreground/85"
                 )}
               >
                 <span>{option.label}</span>
@@ -360,7 +360,7 @@ This wallet likely is not the proposal tally authority.`,
             <Button
               onClick={handleVote}
               disabled={!canVote || isBusy}
-              className="h-9 w-full border border-primary/60 bg-primary/12 text-[0.64rem] tracking-[0.18em] text-primary uppercase hover:bg-primary/20"
+              className="w-full"
             >
               {isBusy ? "Submitting..." : "Submit Vote"}
             </Button>
