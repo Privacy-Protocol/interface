@@ -5,21 +5,22 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button box-border inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md font-code text-xs font-medium tracking-wider whitespace-nowrap uppercase transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button box-border inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md font-code text-sm font-medium tracking-wider whitespace-nowrap uppercase transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "ring-1 ring-inset ring-primary/30 bg-primary/10 text-primary hover:bg-primary/18 hover:ring-primary/40",
+          "bg-primary text-secondary ring-1 ring-primary/30 ring-inset hover:bg-primary/20 hover:text-accent hover:ring-primary/40",
         outline:
-          "ring-1 ring-inset ring-border/60 bg-card/60 text-foreground/70 hover:ring-border hover:bg-card hover:text-foreground/90",
+          "bg-card/60 text-foreground/70 ring-1 ring-primary ring-inset hover:bg-card hover:text-accent hover:ring-border",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+        link:
+          "relative w-fit rounded-none bg-transparent text-primary no-underline hover:bg-transparent hover:text-primary focus-visible:ring-0 focus-visible:ring-offset-0 after:pointer-events-none after:absolute after:right-0 after:bottom-0 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:after:origin-left hover:after:scale-x-100",
       },
       size: {
         default:
@@ -33,6 +34,12 @@ const buttonVariants = cva(
         "icon-lg": "size-9",
       },
     },
+    compoundVariants: [
+      {
+        variant: "link",
+        className: "h-auto gap-1.5 px-0 py-0",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

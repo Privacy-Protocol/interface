@@ -20,8 +20,10 @@ export default async function Page(props: {
   const result = await importPage(params.mdxPath)
   const { default: MDXContent, toc, metadata, ...rest } = result
   return (
-    <Wrapper toc={toc} metadata={metadata} {...rest}>
-      <MDXContent {...props} params={params} />
-    </Wrapper>
+    <div className="docs-page-shell relative z-10">
+      <Wrapper toc={toc} metadata={metadata} {...rest}>
+        <MDXContent {...props} params={params} />
+      </Wrapper>
+    </div>
   )
 }

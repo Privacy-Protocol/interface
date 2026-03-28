@@ -14,24 +14,21 @@ export function ResearchSection({ researchData }: Props) {
     <motion.section
       {...reveal}
       id="research"
-      className="relative px-4 py-20 sm:px-6 sm:py-28"
+      className="relative bg-cover bg-center px-4 py-20 sm:px-6 sm:py-28"
     >
-      <div className="mx-auto max-w-5xl">
-        {/* Section label */}
+      <div className="mx-auto max-w-6xl">
         <div className="flex items-center gap-3">
-          <span className="font-code text-[0.6rem] tracking-[0.25em] text-primary uppercase">
-            Research & Writing
+          <span className="font-code text-xs tracking-[0.25em] text-primary uppercase">
+            {">_ Research & Articles"}
           </span>
           <span className="h-px flex-1 bg-border/60" />
         </div>
 
-        <h2 className="font-heading mt-4 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Grounded in research
+        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
+          RESOURCES
+          <br />
+          <span className="text-accent">grounded in research.</span>
         </h2>
-        <p className="mt-2 max-w-lg text-sm text-muted-foreground">
-          Privacy Protocol is backed by applied cryptography research, protocol
-          design, and engineering-led infrastructure decisions.
-        </p>
 
         <div className="mt-10 grid gap-3 sm:grid-cols-2">
           {researchData.map((post, i) => (
@@ -46,7 +43,7 @@ export function ResearchSection({ researchData }: Props) {
               {/* Meta row */}
               <div className="flex items-center gap-2">
                 <span
-                  className={`font-code rounded border px-1.5 py-0.5 text-[0.5rem] tracking-wider uppercase ${
+                  className={`rounded border px-1.5 py-0.5 font-code text-[0.5rem] tracking-wider uppercase ${
                     post.type === "Research"
                       ? "border-accent/20 text-accent/60"
                       : "border-primary/20 text-primary/60"
@@ -59,7 +56,7 @@ export function ResearchSection({ researchData }: Props) {
                 </span>
               </div>
 
-              <h3 className="font-heading mt-3 text-sm font-semibold text-foreground/85 sm:text-base">
+              <h3 className="mt-3 font-heading text-sm font-semibold text-foreground/85 sm:text-base">
                 {post.title}
               </h3>
 

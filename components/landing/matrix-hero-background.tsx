@@ -134,9 +134,7 @@ function pickWordForSpan(preferredWord: string, spanLength: number) {
     preferredWord,
     ...REARRANGE_WORDS.filter((word) => word !== preferredWord),
   ]
-  return (
-    preferredCandidates.find((word) => word.length <= spanLength) ?? "FHE"
-  )
+  return preferredCandidates.find((word) => word.length <= spanLength) ?? "FHE"
 }
 
 const REARRANGE_TARGETS: Array<string | null> = []
@@ -160,7 +158,9 @@ for (let row = 0; row < GRID_ROWS; row++) {
   }
 
   for (const char of rowChars) {
-    REARRANGE_TARGETS.push(rowTemplate[char.col] === " " ? null : rowTemplate[char.col])
+    REARRANGE_TARGETS.push(
+      rowTemplate[char.col] === " " ? null : rowTemplate[char.col]
+    )
   }
 }
 

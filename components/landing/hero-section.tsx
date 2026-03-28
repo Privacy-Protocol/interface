@@ -6,14 +6,25 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, BookOpen } from "@phosphor-icons/react"
 import { PAGE_LINKS } from "@/lib/constants"
-import { MatrixHeroBackground } from "./matrix-hero-background"
 
 export function HeroSection() {
   const heroTextRef = useRef<HTMLDivElement>(null)
 
   return (
-    <section className="relative min-h-screen px-4 pt-32 pb-16 sm:px-6 sm:pt-40 sm:pb-20">
-      <MatrixHeroBackground interactionScopeRef={heroTextRef} />
+    <section className="relative min-h-screen overflow-hidden px-4 pt-32 pb-16 sm:px-6 sm:pt-40 sm:pb-20">
+      <video
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      >
+        <source src="/man-on-pc-animation.mp4" type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+
       <div className="pointer-events-none relative z-10 mx-auto max-w-5xl">
         <div ref={heroTextRef}>
           <motion.h1
@@ -31,7 +42,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.14 }}
-            className="mx-auto mt-5 max-w-2xl text-center text-sm leading-relaxed text-muted-foreground sm:text-lg"
+            className="mx-auto mt-5 max-w-2xl text-center text-sm leading-relaxed text-foreground sm:text-lg"
           >
             Privacy Protocol simplifies building confidential dapps, allowing
             developers to create privacy-preserving apps without needing deep
@@ -46,7 +57,17 @@ export function HeroSection() {
           className="pointer-events-auto mt-8 flex flex-wrap items-center justify-center gap-3"
         >
           <Button asChild>
-            <Link href={PAGE_LINKS.CIPHER}>Explore Tools</Link>
+            <Link
+              href="#products"
+              onClick={(e) => {
+                e.preventDefault()
+                document
+                  .getElementById("products")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }}
+            >
+              Explore Tools
+            </Link>
           </Button>
           <Button variant={"outline"} asChild>
             <Link href={PAGE_LINKS.DOCS}>

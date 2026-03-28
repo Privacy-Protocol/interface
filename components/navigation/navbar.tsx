@@ -50,6 +50,11 @@ const groups: { label: string; items: NavItem[] }[] = [
         href: PAGE_LINKS.DOCS,
       },
       {
+        title: "Relayer",
+        description: "Privacy Protocol Relayer",
+        href: PAGE_LINKS.RELAYER,
+      },
+      {
         title: "GitHub",
         description: "Source code, examples and contribute",
         href: PAGE_LINKS.GITHUB,
@@ -117,7 +122,7 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-foreground/10 bg-secondary">
+    <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-foreground/10 bg-transparent">
       <motion.div
         animate={{
           borderColor: scrolled

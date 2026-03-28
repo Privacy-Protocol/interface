@@ -251,6 +251,28 @@
     animation: cursor-blink 1.1s steps(1) infinite;
   }
 
+  @media (min-width: 768px) {
+    .docs-page-shell .nextra-sidebar {
+      position: fixed !important;
+      top: var(--nextra-navbar-height);
+      bottom: 0;
+      left: max(0px, calc((100vw - var(--nextra-content-width)) / 2));
+      z-index: 20;
+    }
+
+    .docs-page-shell .nextra-sidebar ~ * {
+      transition: margin-left 0.2s ease-in-out;
+    }
+
+    .docs-page-shell .nextra-sidebar.x\:w-64 ~ * {
+      margin-left: 16rem;
+    }
+
+    .docs-page-shell .nextra-sidebar.x\:w-20 ~ * {
+      margin-left: 5rem;
+    }
+  }
+
   /* Subtle pulse for indicator dots */
   @keyframes soft-pulse {
     0%,

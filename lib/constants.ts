@@ -5,6 +5,7 @@ export const PAGE_LINKS = {
   BLOG: "/blog",
   RESEARCH: "/research",
   DOCS: "/docs",
+  RELAYER: "/relayer",
   GITHUB: "https://github.com/",
   TWITTER: "https://twitter.com/",
   TELEGRAM: "https://t.me/",
