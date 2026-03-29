@@ -1,9 +1,9 @@
-import {
-  configureCipherGlobalProviders,
-  type CipherProofBundle,
-  type CipherProofProvider,
-  type ParsedCipherLog,
-} from "@privacy-protocol/cipher"
+// import {
+//   configureCipherGlobalProviders,
+//   type CipherProofBundle,
+//   type CipherProofProvider,
+//   type ParsedCipherLog,
+// } from "@privacy-protocol/cipher"
 import {
   decodeAbiParameters,
   encodeAbiParameters,
@@ -118,34 +118,34 @@ export function formatTokenBalance(balance: bigint, decimals = 18) {
   })
 }
 
-export function createDemoProofProvider(): CipherProofProvider {
-  return {
-    async generateProof(
-      params: Parameters<CipherProofProvider["generateProof"]>[0]
-    ): Promise<CipherProofBundle> {
-      const response = await fetch("/api/cipher/proof", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(stringifyBigInts(params)),
-      })
+// export function createDemoProofProvider(): CipherProofProvider {
+//   return {
+//     async generateProof(
+//       params: Parameters<CipherProofProvider["generateProof"]>[0]
+//     ): Promise<CipherProofBundle> {
+//       const response = await fetch("/api/cipher/proof", {
+//         method: "POST",
+//         headers: { "content-type": "application/json" },
+//         body: JSON.stringify(stringifyBigInts(params)),
+//       })
 
-      if (!response.ok) {
-        const body = await response.text()
-        throw new Error(body || "Failed to generate Cipher proof")
-      }
+//       if (!response.ok) {
+//         const body = await response.text()
+//         throw new Error(body || "Failed to generate Cipher proof")
+//       }
 
-      return response.json()
-    },
-  }
-}
+//       return response.json()
+//     },
+//   }
+// }
 
-let providersConfigured = false
+// let providersConfigured = false
 
-export function ensureCipherDemoProviders() {
-  if (providersConfigured) return
-  configureCipherGlobalProviders({ proofProvider: createDemoProofProvider() })
-  providersConfigured = true
-}
+// export function ensureCipherDemoProviders() {
+//   if (providersConfigured) return
+//   configureCipherGlobalProviders({ proofProvider: createDemoProofProvider() })
+//   providersConfigured = true
+// }
 
 export function buildInterimTallyCommitment(values: {
   contextId: `0x${string}`
@@ -171,76 +171,76 @@ export function buildInterimTallyCommitment(values: {
   )
 }
 
-export function mapCipherLogs(logs: ParsedCipherLog[]): TTransactionLog[] {
-  return logs.map((log) => {
-    switch (log.type) {
-      case "router.actionSubmitted":
-        return {
-          status: "Router",
-          method: "ActionSubmitted",
-          hash: shortenHex(log.txHash),
-          tone: "cyan",
-          params: [
-            `contextId: ${shortenHex(log.contextId)}`,
-            `nullifierKey: ${shortenHex(log.nullifierKey)}`,
-            `payloadHash: ${shortenHex(log.payloadHash)}`,
-            `encryptedRef: ${shortenHex(log.encryptedPayloadRef)}`,
-            "plaintext vote is not present onchain",
-          ].join("\n"),
-        }
-      case "voting.voteStored":
-        return {
-          status: "Adapter",
-          method: "VoteStored",
-          hash: shortenHex(log.txHash),
-          tone: "emerald",
-          params: [
-            `actionId: ${shortenHex(log.actionId)}`,
-            `root: ${shortenHex(log.root)}`,
-            `nullifier: ${shortenHex(log.nullifier)}`,
-            `payloadHash: ${shortenHex(log.payloadHash)}`,
-            `encryptedRef: ${shortenHex(log.encryptedPayloadRef)}`,
-            "only hidden bindings were stored",
-          ].join("\n"),
-        }
-      case "voting.interimTallySubmitted":
-        return {
-          status: "Snapshot",
-          method: "InterimTallySubmitted",
-          hash: shortenHex(log.txHash),
-          tone: "emerald",
-          params: [
-            `for: ${log.forVotes.toString()}`,
-            `against: ${log.againstVotes.toString()}`,
-            `abstain: ${log.abstainVotes.toString()}`,
-            `tallyCommitment: ${shortenHex(log.tallyCommitment)}`,
-            "aggregate counts updated without opening individual votes",
-          ].join("\n"),
-        }
-      case "voting.tallySubmitted":
-        return {
-          status: "Final",
-          method: "TallySubmitted",
-          hash: shortenHex(log.txHash),
-          tone: "emerald",
-          params: [
-            `for: ${log.forVotes.toString()}`,
-            `against: ${log.againstVotes.toString()}`,
-            `abstain: ${log.abstainVotes.toString()}`,
-            `tallyCommitment: ${shortenHex(log.tallyCommitment)}`,
-          ].join("\n"),
-        }
-      default:
-        return {
-          status: "Event",
-          method: log.type,
-          hash: shortenHex(log.txHash),
-          tone: "cyan",
-          params: JSON.stringify(log, null, 2),
-        }
-    }
-  })
-}
+// export function mapCipherLogs(logs: ParsedCipherLog[]): TTransactionLog[] {
+//   return logs.map((log) => {
+//     switch (log.type) {
+//       case "router.actionSubmitted":
+//         return {
+//           status: "Router",
+//           method: "ActionSubmitted",
+//           hash: shortenHex(log.txHash),
+//           tone: "cyan",
+//           params: [
+//             `contextId: ${shortenHex(log.contextId)}`,
+//             `nullifierKey: ${shortenHex(log.nullifierKey)}`,
+//             `payloadHash: ${shortenHex(log.payloadHash)}`,
+//             `encryptedRef: ${shortenHex(log.encryptedPayloadRef)}`,
+//             "plaintext vote is not present onchain",
+//           ].join("\n"),
+//         }
+//       case "voting.voteStored":
+//         return {
+//           status: "Adapter",
+//           method: "VoteStored",
+//           hash: shortenHex(log.txHash),
+//           tone: "emerald",
+//           params: [
+//             `actionId: ${shortenHex(log.actionId)}`,
+//             `root: ${shortenHex(log.root)}`,
+//             `nullifier: ${shortenHex(log.nullifier)}`,
+//             `payloadHash: ${shortenHex(log.payloadHash)}`,
+//             `encryptedRef: ${shortenHex(log.encryptedPayloadRef)}`,
+//             "only hidden bindings were stored",
+//           ].join("\n"),
+//         }
+//       case "voting.interimTallySubmitted":
+//         return {
+//           status: "Snapshot",
+//           method: "InterimTallySubmitted",
+//           hash: shortenHex(log.txHash),
+//           tone: "emerald",
+//           params: [
+//             `for: ${log.forVotes.toString()}`,
+//             `against: ${log.againstVotes.toString()}`,
+//             `abstain: ${log.abstainVotes.toString()}`,
+//             `tallyCommitment: ${shortenHex(log.tallyCommitment)}`,
+//             "aggregate counts updated without opening individual votes",
+//           ].join("\n"),
+//         }
+//       case "voting.tallySubmitted":
+//         return {
+//           status: "Final",
+//           method: "TallySubmitted",
+//           hash: shortenHex(log.txHash),
+//           tone: "emerald",
+//           params: [
+//             `for: ${log.forVotes.toString()}`,
+//             `against: ${log.againstVotes.toString()}`,
+//             `abstain: ${log.abstainVotes.toString()}`,
+//             `tallyCommitment: ${shortenHex(log.tallyCommitment)}`,
+//           ].join("\n"),
+//         }
+//       default:
+//         return {
+//           status: "Event",
+//           method: log.type,
+//           hash: shortenHex(log.txHash),
+//           tone: "cyan",
+//           params: JSON.stringify(log, null, 2),
+//         }
+//     }
+//   })
+// }
 
 export function decodeProofPayload(encoded: `0x${string}`) {
   return decodeAbiParameters(

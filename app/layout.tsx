@@ -60,7 +60,7 @@ const fontCode = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Privacy Protocol",
   description:
-    "Developer tools for building confidential web3 applications. Zero-knowledge proofs and fully homomorphic encryption, abstracted.",
+    "Developer tools for building confidential web3 applications",
 }
 
 export default function RootLayout({

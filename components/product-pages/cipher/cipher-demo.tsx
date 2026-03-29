@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { createCipherClient } from "@privacy-protocol/cipher"
+// import { createCipherClient } from "@privacy-protocol/cipher"
 import { useAccount, usePublicClient, useWalletClient } from "wagmi"
 import { sepolia } from "wagmi/chains"
 import { Button } from "@/components/ui/button"
@@ -12,8 +12,8 @@ import {
   DEMO_DAO2,
   DEMO_DAO2_ABI,
   DEMO_WITNESS,
-  ensureCipherDemoProviders,
-  mapCipherLogs,
+  // ensureCipherDemoProviders,
+  // mapCipherLogs,
 } from "@/lib/cipher-demo"
 
 const choiceMap: Record<DemoChoice, "for" | "against" | "abstain"> = {
@@ -56,236 +56,236 @@ export function CipherDemo({ onLogsChange }: CipherDemoProps) {
   const { data: walletClient } = useWalletClient()
   const publicClient = usePublicClient({ chainId: sepolia.id })
 
-  useEffect(() => {
-    ensureCipherDemoProviders()
-  }, [])
+  // useEffect(() => {
+  //   ensureCipherDemoProviders()
+  // }, [])
 
-  const cipher = useMemo(() => {
-    if (!walletClient) return null
-    return createCipherClient({
-      chain: sepolia,
-      walletClient,
-      appId: DEMO_APP_ID,
-    })
-  }, [walletClient])
+  // const cipher = useMemo(() => {
+  //   if (!walletClient) return null
+  //   return createCipherClient({
+  //     chain: sepolia,
+  //     walletClient,
+  //     appId: DEMO_APP_ID,
+  //   })
+  // }, [walletClient])
 
-  const refreshDemoState = useCallback(async () => {
-    if (!publicClient || !cipher) return
+  // const refreshDemoState = useCallback(async () => {
+  //   if (!publicClient || !cipher) return
 
-    try {
-      const proposalCount = (await publicClient.readContract({
-        address: DEMO_DAO2,
-        abi: DEMO_DAO2_ABI,
-        functionName: "s_proposalCount",
-      })) as bigint
+  //   try {
+  //     const proposalCount = (await publicClient.readContract({
+  //       address: DEMO_DAO2,
+  //       abi: DEMO_DAO2_ABI,
+  //       functionName: "s_proposalCount",
+  //     })) as bigint
 
-      if (proposalCount === BigInt(0)) {
-        setActiveProposals([])
-        setProposalDescriptor(null)
-        setStatusMessage(
-          "No active proposals found on DemoDao2 yet. Add one on Etherscan and refresh."
-        )
-        return
-      }
+  //     if (proposalCount === BigInt(0)) {
+  //       setActiveProposals([])
+  //       setProposalDescriptor(null)
+  //       setStatusMessage(
+  //         "No active proposals found on DemoDao2 yet. Add one on Etherscan and refresh."
+  //       )
+  //       return
+  //     }
 
-      const now = BigInt(Math.floor(Date.now() / 1000))
-      const proposalIds = Array.from(
-        { length: Number(proposalCount) },
-        (_, index) => BigInt(index + 1)
-      )
+  //     const now = BigInt(Math.floor(Date.now() / 1000))
+  //     const proposalIds = Array.from(
+  //       { length: Number(proposalCount) },
+  //       (_, index) => BigInt(index + 1)
+  //     )
 
-      const proposals = (
-        await Promise.all(
-          proposalIds.map(async (proposalId) => {
-            try {
-              const [coreTuple, descriptor] = await Promise.all([
-                publicClient.readContract({
-                  address: DEMO_DAO2,
-                  abi: DEMO_DAO2_ABI,
-                  functionName: "s_proposals",
-                  args: [proposalId],
-                }) as Promise<ProposalCoreTuple>,
-                publicClient.readContract({
-                  address: DEMO_DAO2,
-                  abi: DEMO_DAO2_ABI,
-                  functionName: "getCipherProposalDescriptor",
-                  args: [proposalId],
-                }) as Promise<ProposalDescriptor>,
-              ])
+  //     const proposals = (
+  //       await Promise.all(
+  //         proposalIds.map(async (proposalId) => {
+  //           try {
+  //             const [coreTuple, descriptor] = await Promise.all([
+  //               publicClient.readContract({
+  //                 address: DEMO_DAO2,
+  //                 abi: DEMO_DAO2_ABI,
+  //                 functionName: "s_proposals",
+  //                 args: [proposalId],
+  //               }) as Promise<ProposalCoreTuple>,
+  //               publicClient.readContract({
+  //                 address: DEMO_DAO2,
+  //                 abi: DEMO_DAO2_ABI,
+  //                 functionName: "getCipherProposalDescriptor",
+  //                 args: [proposalId],
+  //               }) as Promise<ProposalDescriptor>,
+  //             ])
 
-              const [
-                proposer,
-                target,
-                value,
-                startTime,
-                endTime,
-                optionCount,
-                status,
-                executed,
-              ] = coreTuple
+  //             const [
+  //               proposer,
+  //               target,
+  //               value,
+  //               startTime,
+  //               endTime,
+  //               optionCount,
+  //               status,
+  //               executed,
+  //             ] = coreTuple
 
-              return {
-                proposalId,
-                descriptor: {
-                  ...descriptor,
-                  optionCount: Number(descriptor.optionCount),
-                },
-                core: {
-                  proposer,
-                  target,
-                  value,
-                  startTime,
-                  endTime,
-                  optionCount: Number(optionCount),
-                  status: BigInt(status),
-                  executed,
-                },
-              } satisfies ActiveProposal
-            } catch {
-              return null
-            }
-          })
-        )
-      ).filter((proposal): proposal is ActiveProposal => {
-        if (!proposal) return false
-        return (
-          proposal.core.status === BigInt(0) &&
-          (proposal.core.startTime === BigInt(0) ||
-            now >= proposal.core.startTime) &&
-          (proposal.core.endTime === BigInt(0) || now <= proposal.core.endTime)
-        )
-      })
+  //             return {
+  //               proposalId,
+  //               descriptor: {
+  //                 ...descriptor,
+  //                 optionCount: Number(descriptor.optionCount),
+  //               },
+  //               core: {
+  //                 proposer,
+  //                 target,
+  //                 value,
+  //                 startTime,
+  //                 endTime,
+  //                 optionCount: Number(optionCount),
+  //                 status: BigInt(status),
+  //                 executed,
+  //               },
+  //             } satisfies ActiveProposal
+  //           } catch {
+  //             return null
+  //           }
+  //         })
+  //       )
+  //     ).filter((proposal): proposal is ActiveProposal => {
+  //       if (!proposal) return false
+  //       return (
+  //         proposal.core.status === BigInt(0) &&
+  //         (proposal.core.startTime === BigInt(0) ||
+  //           now >= proposal.core.startTime) &&
+  //         (proposal.core.endTime === BigInt(0) || now <= proposal.core.endTime)
+  //       )
+  //     })
 
-      setActiveProposals(proposals)
+  //     setActiveProposals(proposals)
 
-      if (proposals.length === 0) {
-        setProposalDescriptor(null)
-        setStatusMessage(
-          "No active proposals found on DemoDao2 yet. Add one on Etherscan and refresh."
-        )
-        return
-      }
+  //     if (proposals.length === 0) {
+  //       setProposalDescriptor(null)
+  //       setStatusMessage(
+  //         "No active proposals found on DemoDao2 yet. Add one on Etherscan and refresh."
+  //       )
+  //       return
+  //     }
 
-      const firstProposal = proposals[0]
-      setProposalDescriptor(firstProposal.descriptor)
-      setStatusMessage(
-        "Active proposal loaded. Submit a private vote through Cipher."
-      )
-    } catch (error) {
-      console.error(error)
-      setStatusMessage("Could not load active proposals from DemoDao2.")
-    }
-  }, [cipher, publicClient])
+  //     const firstProposal = proposals[0]
+  //     setProposalDescriptor(firstProposal.descriptor)
+  //     setStatusMessage(
+  //       "Active proposal loaded. Submit a private vote through Cipher."
+  //     )
+  //   } catch (error) {
+  //     console.error(error)
+  //     setStatusMessage("Could not load active proposals from DemoDao2.")
+  //   }
+  // }, [cipher, publicClient])
 
-  useEffect(() => {
-    if (!cipher || !publicClient || !isConnected || chainId !== sepolia.id)
-      return
-    void refreshDemoState()
-  }, [chainId, cipher, isConnected, publicClient, refreshDemoState])
+  // useEffect(() => {
+  //   if (!cipher || !publicClient || !isConnected || chainId !== sepolia.id)
+  //     return
+  //   void refreshDemoState()
+  // }, [chainId, cipher, isConnected, publicClient, refreshDemoState])
 
   const currentProposalId = activeProposals[0]?.proposalId ?? null
 
-  const handleVote = useCallback(async () => {
-    if (!cipher || !proposalDescriptor || currentProposalId === null) return
+//   const handleVote = useCallback(async () => {
+//     if (!cipher || !proposalDescriptor || currentProposalId === null) return
 
-    setIsBusy(true)
-    setStatusMessage(
-      "Generating a real Noir proof and submitting the vote through Cipher Router…"
-    )
+//     setIsBusy(true)
+//     setStatusMessage(
+//       "Generating a real Noir proof and submitting the vote through Cipher Router…"
+//     )
 
-    try {
-      const ballot = cipher.dao.ballots.abstainableYesNo().encode({
-        choice: choiceMap[choice],
-        voteBlinding: BigInt(4404),
-        payloadSalt: BigInt(4505),
-      })
+//     try {
+//       const ballot = cipher.dao.ballots.abstainableYesNo().encode({
+//         choice: choiceMap[choice],
+//         voteBlinding: BigInt(4404),
+//         payloadSalt: BigInt(4505),
+//       })
 
-      const voteResult = await cipher.dao.vote({
-        daoAddress: DEMO_DAO2,
-        proposalId: currentProposalId,
-        ballot,
-        witness: DEMO_WITNESS,
-        encryption: {
-          payload: {
-            proposalId: currentProposalId.toString(),
-            choice,
-            note: "Vote payload encrypted offchain; onchain stores only bindings.",
-          },
-          inline: true,
-        },
-      })
+//       const voteResult = await cipher.dao.vote({
+//         daoAddress: DEMO_DAO2,
+//         proposalId: currentProposalId,
+//         ballot,
+//         witness: DEMO_WITNESS,
+//         encryption: {
+//           payload: {
+//             proposalId: currentProposalId.toString(),
+//             choice,
+//             note: "Vote payload encrypted offchain; onchain stores only bindings.",
+//           },
+//           inline: true,
+//         },
+//       })
 
-      const nextLogs = mapCipherLogs(voteResult.logs)
-      onLogsChange?.(nextLogs)
-      setStatusMessage(
-        "Vote recorded. Publishing an interim aggregate snapshot so turnout updates without revealing the ballot."
-      )
+//       const nextLogs = mapCipherLogs(voteResult.logs)
+//       onLogsChange?.(nextLogs)
+//       setStatusMessage(
+//         "Vote recorded. Publishing an interim aggregate snapshot so turnout updates without revealing the ballot."
+//       )
 
-      try {
-        const currentTally = await cipher.dao.getCurrentTally({
-          daoAddress: DEMO_DAO2,
-          proposalId: currentProposalId,
-        })
-        const updatedCounts = addChoiceToTally(choice, currentTally)
-        const snapshotResult = await cipher.dao.publishInterimTally({
-          daoAddress: DEMO_DAO2,
-          proposalId: currentProposalId,
-          tally: {
-            ...updatedCounts,
-            tallyCommitment: buildInterimTallyCommitment({
-              contextId: proposalDescriptor.contextId,
-              ...updatedCounts,
-            }),
-          },
-        })
-        onLogsChange?.([...nextLogs, ...mapCipherLogs(snapshotResult.logs)])
-        setStatusMessage(
-          "Vote stored privately. Snapshot refreshed from the tally authority path to show progress without opening the ballot."
-        )
-      } catch (snapshotError) {
-        const snapshotMessage =
-          snapshotError instanceof Error
-            ? snapshotError.message
-            : "Failed to publish interim tally"
-        onLogsChange?.([
-          ...nextLogs,
-          {
-            status: "Snapshot",
-            method: "Interim snapshot unavailable",
-            hash: "local",
-            tone: "cyan",
-            params: `${snapshotMessage}
-This wallet likely is not the proposal tally authority.`,
-          },
-        ])
-        setStatusMessage(
-          "Vote succeeded, but the interim snapshot could not be updated from this wallet."
-        )
-      }
+//       try {
+//         const currentTally = await cipher.dao.getCurrentTally({
+//           daoAddress: DEMO_DAO2,
+//           proposalId: currentProposalId,
+//         })
+//         const updatedCounts = addChoiceToTally(choice, currentTally)
+//         const snapshotResult = await cipher.dao.publishInterimTally({
+//           daoAddress: DEMO_DAO2,
+//           proposalId: currentProposalId,
+//           tally: {
+//             ...updatedCounts,
+//             tallyCommitment: buildInterimTallyCommitment({
+//               contextId: proposalDescriptor.contextId,
+//               ...updatedCounts,
+//             }),
+//           },
+//         })
+//         onLogsChange?.([...nextLogs, ...mapCipherLogs(snapshotResult.logs)])
+//         setStatusMessage(
+//           "Vote stored privately. Snapshot refreshed from the tally authority path to show progress without opening the ballot."
+//         )
+//       } catch (snapshotError) {
+//         const snapshotMessage =
+//           snapshotError instanceof Error
+//             ? snapshotError.message
+//             : "Failed to publish interim tally"
+//         onLogsChange?.([
+//           ...nextLogs,
+//           {
+//             status: "Snapshot",
+//             method: "Interim snapshot unavailable",
+//             hash: "local",
+//             tone: "cyan",
+//             params: `${snapshotMessage}
+// This wallet likely is not the proposal tally authority.`,
+//           },
+//         ])
+//         setStatusMessage(
+//           "Vote succeeded, but the interim snapshot could not be updated from this wallet."
+//         )
+//       }
 
-      await refreshDemoState()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Vote failed"
-      setStatusMessage(`Cipher vote failed before settlement. ${message}`)
-    } finally {
-      setIsBusy(false)
-    }
-  }, [
-    choice,
-    cipher,
-    currentProposalId,
-    onLogsChange,
-    proposalDescriptor,
-    refreshDemoState,
-  ])
+//       await refreshDemoState()
+//     } catch (error) {
+//       const message = error instanceof Error ? error.message : "Vote failed"
+//       setStatusMessage(`Cipher vote failed before settlement. ${message}`)
+//     } finally {
+//       setIsBusy(false)
+//     }
+//   }, [
+//     choice,
+//     cipher,
+//     currentProposalId,
+//     onLogsChange,
+//     proposalDescriptor,
+//     refreshDemoState,
+//   ])
 
-  const canVote = Boolean(
-    cipher &&
-    proposalDescriptor &&
-    currentProposalId !== null &&
-    isConnected &&
-    chainId === sepolia.id
-  )
+//   const canVote = Boolean(
+//     cipher &&
+//     proposalDescriptor &&
+//     currentProposalId !== null &&
+//     isConnected &&
+//     chainId === sepolia.id
+//   )
 
   if (!isConnected || chainId !== sepolia.id) {
     return (
@@ -314,7 +314,7 @@ This wallet likely is not the proposal tally authority.`,
             on Etherscan, then refresh this panel.
           </p>
           <Button
-            onClick={() => void refreshDemoState()}
+            // onClick={() => void refreshDemoState()}
             disabled={isBusy}
             className="mt-4"
           >
@@ -358,12 +358,18 @@ This wallet likely is not the proposal tally authority.`,
 
           <div className="flex gap-3">
             <Button
+       
+              className="w-full"
+            >
+              {isBusy ? "Submitting..." : "Submit Vote"}
+            </Button>
+            {/* <Button
               onClick={handleVote}
               disabled={!canVote || isBusy}
               className="w-full"
             >
               {isBusy ? "Submitting..." : "Submit Vote"}
-            </Button>
+            </Button> */}
           </div>
         </>
       )}

@@ -109,7 +109,7 @@ function HeroVisual() {
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.12 }}
-      className="relative h-full min-h-[22rem] overflow-hidden rounded-md bg-card/10"
+      className="relative h-full min-h-88 overflow-hidden rounded-md bg-card/10"
     >
       <div className="absolute inset-0 bg-grid opacity-60" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(110,213,249,0.12),transparent_48%)]" />
