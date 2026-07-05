@@ -1,0 +1,113 @@
+# API Reference
+
+## `createCloakClient(config)`
+
+Returns a `CloakClient`.
+
+```ts
+interface CloakConfig {
+  publicClient: PublicClient      // viem, required
+  walletClient?: WalletClient     // required for deposits
+  poolAddress: `0x${string}`
+  relayerUrl: string
+  chainId: number
+  deployBlock?: bigint            // bounds event queries
+  store?: NoteStore               // defaults to MemoryNoteStore
+}
+```
+
+## `CloakClient`
+
+### `deposit({ asset, amount })` → `Promise<Note>`
+
+Funds the pool with a new note. `asset` is `ETH_ADDRESS` (`0x0…0`) for native
+ETH or a token address. For ERC-20, approval is handled automatically. The
+user's wallet signs this transaction. The note is saved to the store and
+returned.
+
+### `send(params)` → `Promise<SendResult>`
+
+Forward a transaction (or transfer) through an ephemeral proxy, relayed.
+
+```ts
+interface SendParams {
+  note: Note
+  target: `0x${string}`
+  data?: `0x${string}`      // omit/"0x" for a plain transfer
+  value?: bigint            // amount of the note's asset to spend; default: whole note minus fee
+  returnAsset?: `0x${string}` // asset expected back at the proxy (enables claiming)
+  fee?: bigint              // relayer fee in the note's asset; default 0
+}
+
+interface SendResult {
+  txHash: `0x${string}`
+  changeNote: Note          // persisted automatically
+  claimNote?: Note          // present if returns were expected
+}
+```
+
+### `withdraw({ note, to, amount?, fee? })` → `Promise<SendResult>`
+
+Convenience wrapper over `send` with an empty calldata transfer to `to`.
+
+### `claim({ claimNote, to, fee? })` → `Promise<SendResult>`
+
+Withdraw a discovered claim note. The claim note must already be harvested
+on-chain (call `sync` first).
+
+### `sync()` → `Promise<MerkleTree>`
+
+Rebuild the Merkle tree from pool events and reconcile stored notes: assign leaf
+indices to newly-confirmed notes and discover harvested claim notes. Returns the
+tree.
+
+### `getNotes()` → `Promise<Note[]>`
+
+Spendable notes (synced, unspent, positive value).
+
+### `getClaimables()` → `Promise<Note[]>`
+
+Discovered, unspent claim notes ready to withdraw.
+
+### `relayerInfo()` → `Promise<RelayerInfo>`
+
+Relayer address, pool address, chain id, and minimum fee.
+
+## `Note`
+
+```ts
+interface Note {
+  secret: bigint            // private — losing this loses the funds
+  nullifierKey: bigint      // private
+  asset: `0x${string}`
+  amount: bigint
+  leafIndex?: number        // assigned after the commitment is found on-chain
+  commitment?: bigint
+  kind?: "deposit" | "change" | "claim"
+  spent?: boolean
+}
+```
+
+## Note stores
+
+- `MemoryNoteStore` — in-memory, lost on reload. Default.
+- `LocalStorageNoteStore(chainId, poolAddress)` — browser localStorage, keyed per chain + pool.
+- `NoteStore` — implement this interface to back notes with your own encrypted storage.
+
+## Lower-level exports
+
+For custom flows: `proveSpend`, `verifySpend`, `MerkleTree`, `poseidon2`,
+`computeCommitment`, `computeNullifier`, `computeIntentHash`, `createNote`,
+`cloakPoolAbi`, `erc20Abi`, and the constants `FIELD_PRIME`, `TREE_HEIGHT`,
+`ZERO_VALUE`, `ETH_ADDRESS`.
+
+## Relayer HTTP API
+
+The SDK talks to the relayer for you, but the endpoints are simple:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/info` | Relayer address, pool, chain id, min fee |
+| `POST` | `/relay` | Submit a spend (proof + intent) |
+| `GET` | `/status/:txHash` | Status of a submitted spend |
+| `GET` | `/health` | Liveness |

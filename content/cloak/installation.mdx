@@ -1,0 +1,43 @@
+# Installation
+
+The SDK ships as `@privacy-protocol/cloak`. It uses [viem](https://viem.sh) for
+chain access; the React entry point additionally uses
+[wagmi](https://wagmi.sh) and TanStack Query.
+
+## Core (any TypeScript / JavaScript project)
+
+```bash npm2yarn
+npm install @privacy-protocol/cloak viem
+```
+
+## React
+
+```bash npm2yarn
+npm install @privacy-protocol/cloak viem wagmi @tanstack/react-query
+```
+
+The proving stack (`@noir-lang/noir_js` and `@aztec/bb.js`) is bundled as a
+direct dependency — you don't install it separately, and the versions are pinned
+for proof compatibility.
+
+## Environment notes
+
+- **Browser** — proving runs in a WebAssembly worker. No special config is
+  needed with Vite or Next.js; if your bundler is strict about WASM, ensure
+  `@aztec/bb.js` is allowed to load its worker.
+- **Node** — works out of the box (Node 20+). Useful for backends and scripts.
+- **WalletConnect / SSR** — build the client lazily on the browser side; the
+  Merkle sync and proving are client operations.
+
+## What you need to configure
+
+Two addresses and one URL, provided for each deployment:
+
+| Value | Description |
+| --- | --- |
+| `poolAddress` | The deployed `CloakPool` contract |
+| `relayerUrl` | The Cloak relayer base URL |
+| `deployBlock` | (Optional) block the pool was deployed at, to speed up event sync |
+
+Fetch the current Sepolia values from your Privacy Protocol dashboard, then head
+to the [Quickstart](/docs/cloak/quickstart).

@@ -1,0 +1,39 @@
+# Cloak SDK
+
+Cloak lets you add **anonymous transactions** to any dapp without writing a
+circuit, deploying a contract, or running infrastructure. It is a privacy-pools
+layer: users deposit funds under a commitment, then forward transactions,
+withdraw, or claim returned funds through zero-knowledge proofs relayed on their
+behalf — so the on-chain trail never links back to them.
+
+Install a TypeScript package, call a few functions (or React hooks), and your
+users transact privately against contracts that are already deployed.
+
+## What it gives you
+
+- **Anonymous sends** — forward an arbitrary transaction (target + calldata + value) to any contract, executed by an ephemeral proxy instead of the user's address.
+- **Private withdrawals** — move funds to a fresh address with no visible link to the deposit.
+- **Claimable returns** — funds a call sends back are captured into a note only the user can withdraw.
+- **Gas sponsorship** — a relayer submits every spend, so the user never signs the on-chain transaction that would deanonymize them.
+- **No contracts to write or deploy** — the pool, verifier, proxy factory, and relayer already exist; you integrate the SDK.
+
+## The pieces
+
+| Layer | Technology | Role |
+| --- | --- | --- |
+| **Circuit** | Noir (UltraHonk) | Proves note ownership, nullifier, amount conservation, and binds the intent |
+| **Contracts** | Solidity (Foundry) | `CloakPool` (pool + proxy factory), generated Honk verifier, `CloakProxy` |
+| **Relayer** | Rust (axum + alloy) | Submits spends and sponsors gas; cannot redirect or inflate fees |
+| **SDK** | TypeScript (viem + wagmi) | Proving, note management, and the developer-facing API |
+
+## Supported now
+
+- **Sepolia testnet**, native **ETH** and **ERC-20** tokens.
+- Arbitrary deposit/spend amounts.
+
+## Next steps
+
+- [How It Works](/docs/cloak/how-it-works) — the deposit → spend → claim lifecycle
+- [Installation](/docs/cloak/installation) — add the SDK to your project
+- [Quickstart](/docs/cloak/quickstart) — deposit and send in a few lines
+- [Privacy & Limitations](/docs/cloak/privacy) — read before shipping

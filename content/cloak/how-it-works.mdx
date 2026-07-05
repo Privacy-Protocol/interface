@@ -1,0 +1,69 @@
+# How It Works
+
+Cloak is a privacy pool. Funds from many users share one contract; a
+zero-knowledge proof lets a user spend *their* funds without revealing which
+deposit was theirs, and a relayer submits the transaction so the user's address
+never appears.
+
+## The note model
+
+Every deposit creates a **note** committed to the pool's Merkle tree. All hashes
+are Poseidon2 over BN254 (identical in the circuit, the contract, and the SDK):
+
+```
+inner      = H(secret, nullifierKey, asset)
+commitment = H(inner, amount)          // the tree leaf
+nullifier  = H(nullifierKey, leafIndex)
+```
+
+The `secret` and `nullifierKey` are private and stored client-side — **they are
+the funds**. The commitment is public; the nullifier is revealed only when the
+note is spent, which permanently marks it used and prevents double-spends.
+
+## Lifecycle
+
+### 1. Deposit (public)
+
+The user's wallet sends `deposit(commitment, asset, amount)` and funds the pool.
+This step is intentionally public — the anonymity set is the collection of all
+deposits, so it should grow before spending.
+
+### 2. Spend (anonymous)
+
+To forward a transaction, withdraw, or pay someone, the SDK builds a proof that:
+
+- the note's commitment is in the tree (Merkle membership),
+- the nullifier is correctly derived (no double-spend),
+- `amount = spendValue + fee + change` (conservation, checked arithmetic),
+- the **change** returns to the pool as a new note,
+- the exact **intent** — target, calldata, relayer, fee, and any expected return
+  asset — is bound into the proof.
+
+The proof and intent go to the **relayer**, which calls `CloakPool.spend`. The
+pool verifies the proof, then deploys a per-spend **ephemeral proxy** (CREATE2)
+and executes the intent from that address. The user's address is nowhere in the
+transaction.
+
+Because the fee amount and the fee recipient are bound into the proof, a
+malicious relayer can only choose whether to submit — never how much it takes or
+where the funds go.
+
+### 3. Claim returned funds
+
+If the forwarded call sends funds back, they land at the ephemeral proxy. The
+pool sweeps them into a **claim note** whose secret only the original spender
+knows (it was pre-committed inside the intent). The SDK discovers claim notes by
+scanning events, and the user withdraws them like any other note.
+
+## Why it's private but trustless
+
+- **Unlinkable** — the executing address is a fresh proxy, and the relayer, not the user, is the on-chain sender.
+- **Non-custodial** — the pool only ever pays out against a valid proof of note ownership; no operator can move user funds.
+- **Verifiable** — the same UltraHonk proof the SDK generates is checked on-chain by a generated Solidity verifier.
+
+## What can't be claimed later
+
+Only *assets* that arrive at the proxy can be claimed. Synchronous **return data**
+from a call (a function's return value) cannot be recovered from a later
+transaction — the SDK surfaces it at execution time via the relayed transaction's
+result instead.

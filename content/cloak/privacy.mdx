@@ -1,0 +1,54 @@
+# Privacy & Limitations
+
+Cloak breaks the on-chain link between a depositor and their transactions, but
+privacy is a property of how you use it. Read this before shipping.
+
+## Where anonymity comes from
+
+Your protection is the **anonymity set** — the pool of deposits your spend could
+plausibly have come from — combined with the **relayer** submitting the
+transaction so your address never signs it. A large, active pool and a relayer
+you don't have to trust for safety are what make a spend unlinkable.
+
+## What to tell your users
+
+### Deposits are public
+
+`deposit` reveals the asset, the amount, and the depositor's address. That's
+inherent: the anonymity comes later, at spend time. Deposit **early** so the set
+grows before you spend.
+
+### Amount correlation
+
+Amounts are arbitrary, which is convenient but leakable. A distinctive deposit
+(say, 1.337 ETH) followed soon after by a spend of a distinctive amount can be
+linked by an observer even though the addresses differ. Mitigate by:
+
+- preferring round amounts,
+- adding **delay** between deposit and spend,
+- splitting across multiple notes.
+
+### Timing correlation
+
+A deposit immediately followed by a spend narrows the set to "deposits made just
+before this spend." Time separation is one of the strongest things a user can do.
+
+## Notes are the funds
+
+The SDK stores each note's `secret` and `nullifierKey` client-side. **If those
+are lost, the funds are unrecoverable** — there is no operator who can restore
+them. In production, back the `NoteStore` with durable, encrypted storage and
+consider letting users export/import their notes.
+
+## Technical limitations (v1)
+
+- **One anonymity set per pool.** Cross-pool privacy is not pooled.
+- **Return *data* isn't claimable.** Only assets that arrive at the ephemeral proxy can be claimed later; a call's synchronous return value is surfaced at execution time, not recoverable from a future transaction.
+- **Association sets / compliance proofs** (the "provably-innocent" subset feature from the Privacy Pools paper) are designed for but not enabled in v1.
+- **Testnet economics.** On Sepolia the relayer runs with a zero fee and sponsors gas. The fee mechanism is fully implemented and bound into every proof, so enabling real fees later requires no redesign.
+- **Trust for liveness, not safety.** A relayer can refuse to submit your transaction (censorship / liveness), but it can never move your funds, redirect a payout, or change the fee — those are fixed by the proof.
+
+## Not audited
+
+Cloak's contracts and circuits have not undergone a formal security audit. Do
+not use with mainnet funds until they have.

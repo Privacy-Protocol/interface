@@ -6,4 +6,5 @@ export default {
   "proof-generation": "Proof Generation",
   deployment: "Deployment",
   "api-reference": "API Reference",
+  cloak: "Cloak SDK",
 }

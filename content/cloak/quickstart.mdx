@@ -1,0 +1,93 @@
+# Quickstart
+
+This walks through the full lifecycle with the core (framework-agnostic) API.
+For React, see [React Hooks](/docs/cloak/react).
+
+## 1. Create a client
+
+```ts
+import { createCloakClient, LocalStorageNoteStore } from "@privacy-protocol/cloak"
+import { createPublicClient, createWalletClient, custom, http } from "viem"
+import { sepolia } from "viem/chains"
+
+const POOL = "0xYourCloakPool"
+const RELAYER = "https://cloak-relayer.onrender.com"
+
+const publicClient = createPublicClient({ chain: sepolia, transport: http() })
+const walletClient = createWalletClient({ chain: sepolia, transport: custom(window.ethereum) })
+
+const cloak = createCloakClient({
+  publicClient,
+  walletClient,
+  chainId: sepolia.id,
+  poolAddress: POOL,
+  relayerUrl: RELAYER,
+  // Persist notes! Notes are the funds. Defaults to in-memory (lost on reload).
+  store: new LocalStorageNoteStore(sepolia.id, POOL),
+})
+```
+
+## 2. Deposit
+
+The user signs and pays for the deposit — it is public by design.
+
+```ts
+import { ETH_ADDRESS } from "@privacy-protocol/cloak"
+
+// Deposit 0.1 ETH
+const note = await cloak.deposit({ asset: ETH_ADDRESS, amount: 10n ** 17n })
+
+// ERC-20: the SDK handles approval automatically
+const usdcNote = await cloak.deposit({ asset: "0xToken", amount: 1_000_000n })
+```
+
+The returned `note` is saved to your store. Let the anonymity set grow before
+spending.
+
+## 3. Send a transaction anonymously
+
+`send` forwards an arbitrary call through an ephemeral proxy, relayed so your
+address never appears.
+
+```ts
+import { encodeFunctionData } from "viem"
+
+await cloak.send({
+  note,
+  target: "0xSomeContract",
+  data: encodeFunctionData({ abi, functionName: "mint", args: [1n] }),
+  value: 5n * 10n ** 16n,        // 0.05 ETH sent with the call
+  returnAsset: ETH_ADDRESS,       // capture any ETH the call returns
+})
+```
+
+The remaining balance (`amount − value − fee`) comes back automatically as a new
+change note in your store.
+
+## 4. Withdraw privately
+
+To move funds to a fresh address with no visible link to the deposit:
+
+```ts
+await cloak.withdraw({ note, to: "0xFreshAddress" })       // whole note
+await cloak.withdraw({ note, to: "0xFreshAddress", amount: 3n * 10n ** 16n }) // partial
+```
+
+## 5. Claim returned funds
+
+Funds a call sent back to the proxy become claim notes. Sync, then withdraw them:
+
+```ts
+await cloak.sync()
+for (const claim of await cloak.getClaimables()) {
+  await cloak.claim({ claimNote: claim, to: "0xFreshAddress" })
+}
+```
+
+## 6. List spendable notes
+
+```ts
+await cloak.sync()
+const notes = await cloak.getNotes()
+const balance = notes.reduce((sum, n) => sum + n.amount, 0n)
+```

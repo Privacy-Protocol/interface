@@ -1,0 +1,109 @@
+# React Hooks
+
+The `@privacy-protocol/cloak/react` entry point wraps the client in wagmi-aware
+hooks. It reads the connected public and wallet clients automatically.
+
+## Setup
+
+Wrap your app with `CloakProvider`, inside `WagmiProvider` and
+`QueryClientProvider`:
+
+```tsx
+import { WagmiProvider } from "wagmi"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { CloakProvider } from "@privacy-protocol/cloak/react"
+
+const queryClient = new QueryClient()
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <CloakProvider
+          poolAddress="0xYourCloakPool"
+          relayerUrl="https://cloak-relayer.onrender.com"
+        >
+          {children}
+        </CloakProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
+}
+```
+
+`CloakProvider` also accepts `deployBlock` and a custom `store`.
+
+## Hooks
+
+Mutations return a TanStack Query [`useMutation`](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)
+result; queries return a `useQuery` result.
+
+### `useDeposit`
+
+```tsx
+import { useDeposit } from "@privacy-protocol/cloak/react"
+import { ETH_ADDRESS } from "@privacy-protocol/cloak"
+
+function Deposit() {
+  const deposit = useDeposit()
+  return (
+    <button
+      disabled={deposit.isPending}
+      onClick={() => deposit.mutate({ asset: ETH_ADDRESS, amount: 10n ** 17n })}
+    >
+      {deposit.isPending ? "Depositing…" : "Deposit 0.1 ETH"}
+    </button>
+  )
+}
+```
+
+### `useCloakSend`
+
+```tsx
+import { useCloakSend } from "@privacy-protocol/cloak/react"
+
+function Send({ note }) {
+  const send = useCloakSend()
+  return (
+    <button onClick={() => send.mutate({ note, target: "0xApp", value: 5n * 10n ** 16n })}>
+      Send anonymously
+    </button>
+  )
+}
+```
+
+### `useWithdraw` and `useClaim`
+
+```tsx
+const withdraw = useWithdraw()
+withdraw.mutate({ note, to: "0xFresh" })
+
+const claim = useClaim()
+claim.mutate({ claimNote, to: "0xFresh" })
+```
+
+### `useNotes` and `useClaimables`
+
+Both call `sync()` and return the reconciled results; they revalidate after any
+mutation.
+
+```tsx
+import { useNotes, useClaimables } from "@privacy-protocol/cloak/react"
+
+function Balance() {
+  const { data: notes, isLoading } = useNotes()
+  const { data: claimables } = useClaimables()
+  if (isLoading) return <span>Loading…</span>
+  const total = (notes ?? []).reduce((s, n) => s + n.amount, 0n)
+  return <div>Balance: {total.toString()} wei · {claimables?.length ?? 0} to claim</div>
+}
+```
+
+### `useCloak`
+
+Escape hatch for the underlying `CloakClient`:
+
+```tsx
+const cloak = useCloak()
+const info = await cloak.relayerInfo()
+```
