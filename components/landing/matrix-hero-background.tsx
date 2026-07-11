@@ -9,9 +9,9 @@ import {
   type CSSProperties,
 } from "react"
 
-export type InteractionMode = "repel" | "scramble" | "rearrange"
+type InteractionMode = "repel" | "scramble" | "rearrange"
 
-export interface MatrixHeroBackgroundProps {
+interface MatrixHeroBackgroundProps {
   mode?: InteractionMode
   charColor?: string
   fontSize?: number

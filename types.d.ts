@@ -138,3 +138,8 @@ type NavItem = {
   href: string
   external?: boolean
 }
+
+type FlowStep = {
+  title: string
+  detail: string
+}

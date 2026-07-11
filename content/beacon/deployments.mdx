@@ -1,0 +1,31 @@
+# Deployments
+
+Pin the **`circuitId`** in your contract and point it at the **`VerifierHub`** address for your
+network. The membership verifier is shared on-chain infrastructure — you don't deploy your own.
+
+## Ethereum Sepolia
+
+`chainId: 11155111`
+
+| Contract | Address |
+| --- | --- |
+| **VerifierHub** | [`0x61AC77da289D9f76B2F91C371bC6bba20cDCa807`](https://sepolia.etherscan.io/address/0x61AC77da289D9f76B2F91C371bC6bba20cDCa807) |
+| **CircuitRegistry** | [`0x7d4aeE3Fd0c84545B84263C98233392b4180fDb5`](https://sepolia.etherscan.io/address/0x7d4aeE3Fd0c84545B84263C98233392b4180fDb5) |
+| **MembershipVerifier** | [`0x6554ebdBc25e9023BC80006775958be57f8d8ea1`](https://sepolia.etherscan.io/address/0x6554ebdBc25e9023BC80006775958be57f8d8ea1) |
+
+**`membership` circuit id**
+
+```
+0x05559ff444cd5e85ff9633527685ac1e6009465c3ee0635569270e76d2c9597b
+```
+
+> The `MembershipVerifier` is reused from Cipher's deployment — its verification key matches Beacon's
+> `membership` circuit, so the same audited verifier backs both products.
+
+## Ethereum mainnet
+
+Coming soon. Ownership of the registry moves to a multisig before any mainnet deployment.
+
+## Next steps
+
+- [Integrate](/docs/beacon/integrate) — wire the hub address into your contract

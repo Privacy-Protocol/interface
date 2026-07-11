@@ -1,0 +1,52 @@
+# Installation
+
+## Add the Beacon SDK
+
+```bash
+npm install @privacy-protocol/beacon
+```
+
+The SDK is **ESM-only** and generates UltraHonk proofs in the browser or in Node. It pulls in the
+Noir proving stack through **pinned peer dependencies** you must install at the exact versions:
+
+```bash
+npm install @noir-lang/noir_js@1.0.0-beta.16 @aztec/bb.js@3.0.0-nightly.20251104
+```
+
+> **Do not bump the peer dependencies.** The proving stack must match the verification key of the
+> deployed on-chain verifier. A different `@noir-lang/noir_js` or `@aztec/bb.js` version can produce
+> proofs that **fail to verify on-chain**. Upgrading them requires regenerating the circuit and
+> verifier together.
+
+`viem` is a regular dependency and ships with the SDK.
+
+## What the SDK exports
+
+- **Proving** — `proveMembershipFromSecrets`, `proveMembershipFromWitness` → `{ proof, publicInputs, nullifierHash, ... }`.
+- **Catalog** — `MEMBERSHIP_ID`, `CATALOG`, `circuitId(name, version)`.
+- **Identity & Merkle** — `createIdentity`, `computeNullifier`, `buildMembershipTree`, `buildMembershipTreeFromLeaves`.
+- **Field helpers** — `toField`, `toBytes32`, `toBig`, `requireField`, `SNARK_SCALAR_FIELD`, `TREE_HEIGHT`.
+
+## Generate a proof
+
+```typescript
+import { proveMembershipFromSecrets, MEMBERSHIP_ID } from "@privacy-protocol/beacon";
+
+// `scope` is a bytes32 domain separator you choose (e.g. a proposal id, an epoch, an app id).
+// The SDK reduces it into the BN254 field and returns the exact publicInputs to pass on-chain.
+const { proof, publicInputs, nullifierHash } = await proveMembershipFromSecrets({
+  scope,                       // bytes32 / bigint domain separator
+  memberSecrets: [s0, s1, s2], // the membership set (leaves = Poseidon2(secret))
+  memberIndex: 0,              // which member is proving
+});
+
+// publicInputs === [scope, root, nullifier] — hand these to your consumer contract.
+```
+
+See [Integrate](/docs/beacon/integrate) for the on-chain side, and [Contracts](/docs/beacon/contracts)
+for the public-input convention.
+
+## Next steps
+
+- [Contracts](/docs/beacon/contracts) — the on-chain surface you call
+- [Integrate](/docs/beacon/integrate) — wire the proof into your contract

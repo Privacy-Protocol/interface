@@ -1,0 +1,71 @@
+# Private DAO Adapter
+
+The Private DAO Adapter is Cipher's confidential governance toolkit — an OpenZeppelin-style Governor
+where ballots are FHE-encrypted and the tally stays encrypted on-chain until the DAO decrypts the
+final result, with an **optional** zero-knowledge membership gate for anonymous, sybil-resistant
+eligibility.
+
+You build your DAO by inheriting `PrivateDaoAdapter`, the same way you'd extend OpenZeppelin's
+`Governor`.
+
+## Privacy by default, ZK by choice
+
+Every DAO on this adapter is **confidential out of the box** — encrypted ballots, encrypted tally.
+The zero-knowledge **membership gate** is an _optional_ layer you switch on for anonymous
+eligibility, and off when you don't need it.
+
+| Mode | What you get | How to enable |
+| --- | --- | --- |
+| **Confidential** | Encrypted ballots + encrypted tally; eligibility by token weight | Deploy with no verifier |
+| **Confidential + ZK gate** | All of the above, plus anonymous membership proofs + one-time nullifiers | Deploy with a verifier + membership root |
+
+The gate is **runtime-configurable** by the owner (`setZkMembership`) — turn it on or off after
+deployment without migrating.
+
+## The two cryptographic layers
+
+| Layer | Technology | Purpose |
+| --- | --- | --- |
+| **Fully Homomorphic Encryption** | Zama fhEVM | Encrypt ballots; tally encrypted values without decrypting individual votes |
+| **Zero-Knowledge proofs** | Noir + UltraHonk | Prove DAO membership + nullifier correctness without revealing _which_ member votes |
+
+## Features
+
+- **Encrypted ballots** — votes are submitted as FHE ciphertext; the cleartext choice never touches the chain.
+- **Encrypted homomorphic tally** — Against / For / Abstain accumulate under FHE as `euint64`.
+- **Token-weighted voting** — weight comes from a confidential [ERC-7984](https://eips.ethereum.org/EIPS/eip-7984) votes token (delegation-based).
+- **Encrypted quorum** — quorum is checked against the encrypted total supply.
+- **Optional ZK membership gate** — a Noir proof over a Poseidon2 Merkle tree (depth 32) proves eligibility anonymously.
+- **One-time nullifiers** — `Poseidon2(proposalId, identitySecret)` stops a member voting twice, even from different wallets.
+- **Runtime toggle** — enable / disable / reconfigure the gate after deployment.
+- **Two-phase result decryption** — request decryption, fetch the KMS public decryption, then finalize on-chain; only the two result booleans are ever revealed.
+- **Standard Governor lifecycle** — `propose` / `state` / `execute`, built on OpenZeppelin Governor.
+
+## How a vote flows (ZK gate enabled)
+
+1. **Delegate** — token holders delegate their confidential votes token to gain voting weight.
+2. **Propose** — `propose(targets, values, calldatas, description)` opens a proposal.
+3. **Vote** — a member submits an encrypted ballot + a Noir membership proof + a one-time nullifier in one transaction.
+4. **Tally** — the contract adds the encrypted weight into the encrypted tally; nothing is revealed.
+5. **Decrypt** — after the deadline: request decryption → fetch the KMS public decryption → finalize on-chain, resolving `quorumReached` / `voteSucceeded`.
+6. **Execute** — a succeeded proposal runs via `execute`.
+
+With the gate disabled, step 3 is just an encrypted ballot — no proof, no nullifier.
+
+## What you need
+
+- A confidential [ERC-7984](https://eips.ethereum.org/EIPS/eip-7984) votes token implementing
+  [`IVotesConfidential`](/docs/cipher/adapters/private-dao-adapter/api-reference) (you bring your own).
+- The [`@privacy-protocol/cipher-contracts`](/docs/cipher/installation) package and its peer deps.
+- For the ZK gate: the off-chain proving + encryption stack (see [Proofs & Encryption](/docs/cipher/adapters/private-dao-adapter/proofs)).
+
+> The package ships the on-chain Solidity only. Your app generates the ZK proof, encrypts the
+> ballot, and supplies the KMS decryption inputs off-chain.
+
+## In this section
+
+- [Build Your DAO](/docs/cipher/adapters/private-dao-adapter/build) — inherit the adapter and wire up voting
+- [Membership & Proving Kits](/docs/cipher/adapters/private-dao-adapter/membership) — how the member set and roots are built
+- [Proofs & Encryption](/docs/cipher/adapters/private-dao-adapter/proofs) — generate the off-chain inputs
+- [Deployment](/docs/cipher/adapters/private-dao-adapter/deployment) — deploy your DAO and (optionally) a verifier
+- [API Reference](/docs/cipher/adapters/private-dao-adapter/api-reference) — full contract interface

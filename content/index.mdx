@@ -1,52 +1,46 @@
-# Privacy Protocol Cipher
+# Privacy Protocol
 
-Privacy Protocol Cipher is a privacy middleware toolkit for building confidential decentralized applications on EVM blockchains. It combines **Zero-Knowledge proofs** (Noir) and **Fully Homomorphic Encryption** (Zama FHEVM) to enable private, verifiable on-chain logic.
+Privacy Protocol is a suite of privacy tooling for building **confidential decentralized
+applications** on EVM chains. It packages advanced cryptography — **Zero-Knowledge proofs** (Noir +
+UltraHonk) and **Fully Homomorphic Encryption** (Zama fhEVM) — into products you can adopt
+independently: reusable contracts, a proof oracle, and an anonymous-transactions SDK. Pick the layer
+that fits your app; no chain migration, no hand-rolled circuits.
 
-## What it does
+## The suite
 
-Cipher lets you build applications where sensitive data — like votes, bids, or balances — stays encrypted on-chain while still being provably correct. No one can see individual values, but everyone can verify the aggregate results.
-
-## How it works
-
-Cipher uses two complementary cryptographic primitives:
-
-| Layer | Technology | Purpose |
+| Product | What it is | Integrate via |
 | --- | --- | --- |
-| **Zero-Knowledge Proofs** | Noir + Honk SNARK | Prove membership, ballot validity, and nullifier correctness without revealing identity |
-| **Fully Homomorphic Encryption** | Zama FHEVM | Encrypt votes on-chain; tally encrypted values without decrypting individual ones |
+| [**Cipher**](/docs/cipher) | Privacy middleware toolkit — domain-specific **adapters** of reusable Solidity contracts (e.g. confidential DAO governance) you inherit and deploy | `@privacy-protocol/cipher-contracts` |
+| [**Beacon**](/docs/beacon) | Modular **zero-knowledge proof oracle** — your contract verifies catalog proofs through one shared `VerifierHub` entrypoint, proving runs client-side | `@privacy-protocol/beacon` |
+| [**Cloak SDK**](/docs/cloak) | **Anonymous transactions** for any dapp — a privacy-pools layer for private sends, withdrawals, and claims, with relayed gas sponsorship | `@privacy-protocol/cloak` |
 
-### The flow
+## Which product do I need?
 
-1. **Membership proof** — A Noir circuit proves the voter belongs to the DAO without revealing which member they are
-2. **Encrypted vote** — The vote is FHE-encrypted before submission; even the contract cannot see individual votes
-3. **Nullifier** — A deterministic hash ties each voter to each proposal exactly once, preventing double voting
-4. **Homomorphic tallying** — The contract adds encrypted votes together without decrypting them
-5. **Final reveal** — When voting ends, the aggregate tally is decrypted via KMS, revealing only totals
+- **I want confidential app logic on-chain** (encrypted ballots, private state, proof-gated actions)
+  → start with [Cipher](/docs/cipher) and its [adapters](/docs/cipher/adapters).
+- **I want my contract to verify a ZK predicate** ("this caller is a member") without writing a
+  circuit → use [Beacon](/docs/beacon).
+- **I want my users to transact without linking their address** → integrate the
+  [Cloak SDK](/docs/cloak).
 
-## Available toolkits
+The products compose: a Cipher adapter can gate membership through the same proving stack Beacon
+curates, and Cloak keeps the transactions that drive either of them unlinkable.
 
-### DAO Toolkit (available now)
+## Built on proven cryptography
 
-The DAO Toolkit provides private governance primitives:
-
-- **`PrivateDaoAdapter`** — Core adapter contract for private proposals and voting
-- **`IPrivateDaoAdapter`** — Interface for integrating into your own DAO contracts
-- **`VoteSubmissionVerifier`** — On-chain Honk SNARK verifier for membership proofs
-- **Proof generation scripts** — TypeScript utilities for generating ZK proofs client-side or server-side
-
-### Coming soon
-
-Additional privacy toolkits for other use cases (private auctions, confidential transfers, etc.) are planned. The modular architecture means each toolkit can be adopted independently.
+| Foundation | Technology | Role |
+| --- | --- | --- |
+| **Zero-Knowledge proofs** | Noir + UltraHonk | Validation, eligibility, and rule enforcement without revealing data |
+| **Fully Homomorphic Encryption** | Zama fhEVM | Encrypted computation — operate on ciphertext without decrypting it |
 
 ## Supported networks
 
-- **Sepolia testnet** — Pre-deployed contracts available now
-- **Ethereum mainnet** — Coming soon
-- **L2 networks** — Support for major L2s is planned
-- **Starknet & Solana** — Cross-chain expansion on the roadmap
+- **Sepolia testnet** — available now
+- **Ethereum mainnet** — coming soon
+- **L2 networks** — planned
 
 ## Next steps
 
-- [Prerequisites](/docs/prerequisites) — Tools and knowledge you'll need
-- [Installation](/docs/installation) — Add Cipher to your Hardhat project
-- [Contracts Guide](/docs/contracts) — Integrate private voting into your DAO
+- [Cipher](/docs/cipher) — reusable privacy contracts and adapters
+- [Beacon](/docs/beacon) — the ZK proof oracle
+- [Cloak SDK](/docs/cloak) — anonymous transactions for your dapp

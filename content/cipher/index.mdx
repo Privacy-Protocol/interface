@@ -1,0 +1,62 @@
+# Cipher
+
+Cipher is a privacy middleware toolkit for building **confidential decentralized applications** on
+EVM chains. It packages advanced cryptography — **Zero-Knowledge proofs** (Noir) and **Fully
+Homomorphic Encryption** (Zama) — into reusable Solidity contracts you inherit and deploy, so you
+can add private data, proof-based validation, and encrypted computation to your app without
+designing privacy infrastructure from scratch.
+
+```bash
+npm i @privacy-protocol/cipher-contracts
+```
+
+## What Cipher does
+
+- **Keep data private** — protect sensitive inputs, transaction details, and app state on-chain.
+- **Verify without revealing** — prove eligibility, validity, and rules without exposing the underlying data.
+- **Built for real use cases** — apply the right privacy model per domain instead of one generic layer.
+- **Contracts first** — integrate through reusable contracts today, with SDK support as the product expands.
+
+## How it works
+
+1. **Choose an adapter** — start from a privacy flow built for your use case.
+2. **Protect the data** — Cipher applies proofs and encryption before execution.
+3. **Verify on-chain** — contracts validate the action without exposing sensitive data.
+4. **Run securely** — your app executes with privacy and verification built in.
+
+## Adapters
+
+Cipher is organized into **adapters** — domain-specific toolkits of reusable contracts you inherit
+and deploy. Each adapter packages the right privacy architecture for a particular application area.
+
+| Adapter | Status | Purpose |
+| --- | --- | --- |
+| [**Private DAO Adapter**](/docs/cipher/adapters/private-dao-adapter) | Available | Confidential governance — encrypted ballots, encrypted tallying, optional anonymous membership |
+
+See [Adapters](/docs/cipher/adapters) for details.
+
+## Built on proven cryptography
+
+| Foundation | Technology | Role |
+| --- | --- | --- |
+| **Zero-Knowledge proofs** | Noir + UltraHonk | Validation, eligibility, and rule enforcement without revealing data |
+| **Fully Homomorphic Encryption** | Zama fhEVM | Encrypted computation — operate on ciphertext without decrypting it |
+
+## Why teams choose Cipher
+
+- **No chain migration** — bring confidentiality to existing EVM apps without moving contracts or assets.
+- **Less crypto complexity** — no hand-rolled circuits or encrypted flows.
+- **Flexible by domain** — adapters designed for real app categories.
+- **Easy to integrate** — reusable contracts with a simple developer workflow.
+
+## Supported networks
+
+- **Sepolia testnet** — available now
+- **Ethereum mainnet** — coming soon
+- **L2 networks** — planned
+
+## Next steps
+
+- [Prerequisites](/docs/cipher/prerequisites) — tools and concepts you'll need
+- [Installation](/docs/cipher/installation) — add Cipher to your project
+- [Adapters](/docs/cipher/adapters) — explore the available adapters

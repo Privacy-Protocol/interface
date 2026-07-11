@@ -25,6 +25,11 @@ const groups = [
         description: "Actor privacy & shielding",
         href: PAGE_LINKS.CLOAK,
       },
+      {
+        label: "Beacon",
+        description: "Modular ZK proof oracle",
+        href: PAGE_LINKS.BEACON,
+      },
     ],
   },
   {
@@ -35,11 +40,11 @@ const groups = [
         description: "Guides & API reference",
         href: PAGE_LINKS.DOCS,
       },
-      {
-        label: "Relayer",
-        description: "Privacy Protocol Relayer",
-        href: PAGE_LINKS.RELAYER,
-      },
+      // {
+      //   label: "Relayer",
+      //   description: "Privacy Protocol Relayer",
+      //   href: PAGE_LINKS.RELAYER,
+      // },
       {
         label: "GitHub",
         description: "Source code and contribute",
@@ -48,21 +53,21 @@ const groups = [
       },
     ],
   },
-  {
-    heading: "Resources",
-    links: [
-      {
-        label: "Blog",
-        description: "Updates & releases",
-        href: PAGE_LINKS.BLOG,
-      },
-      {
-        label: "Research",
-        description: "Protocol research",
-        href: PAGE_LINKS.RESEARCH,
-      },
-    ],
-  },
+  // {
+  //   heading: "Resources",
+  //   links: [
+  //     {
+  //       label: "Blog",
+  //       description: "Updates & releases",
+  //       href: PAGE_LINKS.BLOG,
+  //     },
+  //     {
+  //       label: "Research",
+  //       description: "Protocol research",
+  //       href: PAGE_LINKS.RESEARCH,
+  //     },
+  //   ],
+  // },
 ]
 
 const socials = [
@@ -98,7 +103,7 @@ export function Footer() {
   return (
     <footer className="relative z-10 border-t border-border/30 bg-card/20 px-4 py-12 backdrop-blur-sm sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr_1fr]">
           <div>
             <Link href="/" className="group inline-flex items-center">
               <Image
@@ -173,13 +178,10 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-border/20 pt-5 sm:flex-row">
-          <p className="font-code text-[0.5rem] tracking-wider text-muted-foreground/30 uppercase">
+        <div className="mt-10 border-t border-border/20 pt-5">
+          <p className="text-center font-code text-xs tracking-wider text-muted-foreground uppercase">
             &copy; {new Date().getFullYear()} Privacy Protocol. All rights
             reserved.
-          </p>
-          <p className="font-code text-[0.5rem] tracking-wider text-muted-foreground/20 uppercase">
-            Confidential infrastructure for modern apps
           </p>
         </div>
       </div>

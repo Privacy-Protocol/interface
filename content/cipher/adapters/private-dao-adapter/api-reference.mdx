@@ -1,0 +1,218 @@
+# API Reference
+
+The adapter's external surface. It extends the confidential Governor (`propose` / `state` /
+`execute` / …) and adds the membership gate, confidential voting, and result-decryption flow.
+
+```solidity
+import {IPrivateDaoAdapter} from
+    "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+```
+
+## Membership gate
+
+#### `zkMembershipEnabled`
+
+```solidity
+function zkMembershipEnabled() external view returns (bool);
+```
+
+Whether the optional ZK gate is on (a verifier is configured).
+
+#### `voteSubmissionVerifier`
+
+```solidity
+function voteSubmissionVerifier() external view returns (address);
+```
+
+The Noir verifier, or `address(0)` when the gate is disabled.
+
+#### `membershipRoot`
+
+```solidity
+function membershipRoot() external view returns (bytes32);
+```
+
+The global Poseidon2 membership root, or `bytes32(0)` when disabled.
+
+#### `nullifierUsed`
+
+```solidity
+function nullifierUsed(uint256 proposalId, bytes32 nullifierHash) external view returns (bool);
+```
+
+Whether a nullifier has already been spent on a proposal.
+
+#### `setZkMembership` &nbsp;<small>(owner)</small>
+
+```solidity
+function setZkMembership(address verifier, bytes32 newMembershipRoot) external;
+```
+
+Enable, disable, or reconfigure the gate at runtime. A non-zero verifier + non-zero canonical root
+enables; `address(0)` + `bytes32(0)` disables. Any other combination reverts.
+
+#### `setMembershipRoot` &nbsp;<small>(owner)</small>
+
+```solidity
+function setMembershipRoot(bytes32 newMembershipRoot) external;
+```
+
+Rotate the membership root while the gate is enabled.
+
+## Confidential voting
+
+#### `castEncryptedVoteWithMembershipProof`
+
+```solidity
+function castEncryptedVoteWithMembershipProof(
+    uint256 proposalId,
+    externalEuint8 support,
+    bytes calldata supportProof,
+    bytes32 nullifierHash,
+    bytes calldata membershipProof
+) external returns (euint64);
+```
+
+| Parameter | Description |
+| --- | --- |
+| `proposalId` | The proposal being voted on |
+| `support` | Encrypted ballot handle (0 Against / 1 For / 2 Abstain) |
+| `supportProof` | FHE input proof for `support` |
+| `nullifierHash` | `Poseidon2(proposalId mod BN254, identitySecret)` |
+| `membershipProof` | Serialized Noir proof for the current `membershipRoot` |
+
+**Reverts:** `PDA__MembershipProofNotEnabled` (gate off), `PDA__NullifierAlreadyUsed`,
+`PDA__InvalidMembershipProof`, `PDA__FieldElementOutOfRange`.
+
+#### `castEncryptedVote`
+
+```solidity
+function castEncryptedVote(
+    uint256 proposalId,
+    externalEuint8 support,
+    bytes calldata supportProof
+) external returns (euint64);
+```
+
+Plain confidential vote (no membership proof). **Reverts** with `PDA__MembershipProofRequired` while
+the gate is enabled.
+
+#### `proposalVotes`
+
+```solidity
+function proposalVotes(uint256 proposalId)
+    external view returns (euint64 againstVotes, euint64 forVotes, euint64 abstainVotes);
+```
+
+The encrypted tally handles. They remain encrypted even after finalization.
+
+## Result decryption
+
+#### `requestProposalResultDecryption`
+
+```solidity
+function requestProposalResultDecryption(uint256 proposalId) external;
+```
+
+After the deadline, makes the encrypted result booleans publicly decryptable.
+
+#### `encryptedProposalResult`
+
+```solidity
+function encryptedProposalResult(uint256 proposalId)
+    external view returns (ebool encryptedQuorumReached, ebool encryptedVoteSucceeded);
+```
+
+#### `finalizeProposalResult`
+
+```solidity
+function finalizeProposalResult(
+    uint256 proposalId,
+    bytes memory abiEncodedProposalResult, // abi.encode(bool quorumReached, bool voteSucceeded)
+    bytes memory decryptionProof           // KMS proof, re-verified on-chain
+) external;
+```
+
+#### `quorumReached` / `voteSucceeded`
+
+```solidity
+function quorumReached(uint256 proposalId) external view returns (bool);
+function voteSucceeded(uint256 proposalId) external view returns (bool);
+```
+
+Resolve the finalized result. **Revert** until `finalizeProposalResult` has run.
+
+## Inherited Governor surface
+
+Standard OpenZeppelin Governor functions are available, including:
+
+```solidity
+function propose(address[] targets, uint256[] values, bytes[] calldatas, string description)
+    external returns (uint256 proposalId);
+function state(uint256 proposalId) external view returns (ProposalState);
+function proposalSnapshot(uint256 proposalId) external view returns (uint256);
+function proposalDeadline(uint256 proposalId) external view returns (uint256);
+function hasVoted(uint256 proposalId, address account) external view returns (bool);
+function execute(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash)
+    external payable returns (uint256 proposalId);
+```
+
+> `state()` reverts with `GovernorConfidential__ResultNotFinalized` between a proposal's deadline and
+> `finalizeProposalResult`.
+
+## Events
+
+| Event | Parameters | Emitted when |
+| --- | --- | --- |
+| `PDA__ZkMembershipConfigured` | `verifier`, `membershipRoot`, `enabled` | gate (re)configured — constructor or `setZkMembership` |
+| `PDA__MembershipRootUpdated` | `previousRoot`, `newRoot` | `setMembershipRoot` |
+| `PDA__MembershipVoteCast` | `proposalId`, `nullifierHash` | a membership-gated vote is accepted |
+| `EncryptedVoteCast` | `voter`, `proposalId`, `encryptedSupport`, `weight`, `reason` | any encrypted vote |
+| `ProposalResultDecryptionRequested` | `proposalId`, `encryptedQuorumReached`, `encryptedVoteSucceeded` | `requestProposalResultDecryption` |
+| `ProposalResultFinalized` | `proposalId`, `quorumReached`, `voteSucceeded` | `finalizeProposalResult` |
+| `ProposalCreated` | Governor-standard | `propose` |
+
+## Errors
+
+| Error | Cause |
+| --- | --- |
+| `PDA__InvalidVerifier` | Verifier address has no contract code |
+| `PDA__InvalidMembershipRoot` | Zero/out-of-range root when enabling, or a root supplied without a verifier |
+| `PDA__FieldElementOutOfRange` | A field element ≥ the BN254 scalar field |
+| `PDA__NullifierAlreadyUsed` | Double vote — nullifier already spent on this proposal |
+| `PDA__InvalidMembershipProof` | Noir proof failed verification |
+| `PDA__MembershipProofRequired` | Used an un-gated entrypoint while the gate is enabled |
+| `PDA__MembershipProofNotEnabled` | Used a ZK-only function while the gate is disabled |
+
+## `IVotesConfidential` (your token)
+
+Your votes token implements this confidential `IVotes`-style interface:
+
+```solidity
+function getVotes(address account) external view returns (euint64);
+function getPastVotes(address account, uint256 timepoint) external view returns (euint64);
+function getPastTotalSupply(uint256 timepoint) external view returns (euint64);
+function confidentialTotalSupply() external view returns (euint64);
+function delegates(address account) external view returns (address);
+function delegate(address delegatee) external;
+```
+
+## Off-chain artifacts
+
+The proving kit and member-set artifacts your client produces (see
+[Membership & Proving Kits](/docs/cipher/adapters/private-dao-adapter/membership)):
+
+```typescript
+type ProvingKit = {
+  membershipRoot: string;   // bytes32, must match on-chain
+  leafIndex: number;
+  leafHash: string;         // bytes32 — Poseidon2(identitySecret)
+  identitySecret: string;   // bytes32 — PRIVATE
+  siblingPath: string[];    // 32 × bytes32
+};
+
+type MemberSet = {
+  membershipRoot: string;   // bytes32
+  leaves: string[];         // ordered; index = leafIndex
+};
+```

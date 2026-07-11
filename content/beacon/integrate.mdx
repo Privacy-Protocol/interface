@@ -1,0 +1,91 @@
+# Integrate
+
+Making your contract a Beacon consumer is three steps: **pin a `circuitId`**, **call the hub**, and
+**track your own nullifiers**.
+
+## The consumer pattern
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+interface IVerifierHub {
+    function verify(bytes32 circuitId, bytes calldata proof, bytes32[] calldata publicInputs)
+        external view returns (bool);
+}
+
+contract MyGate {
+    IVerifierHub public immutable hub;
+    // Pin the catalog circuit you verify against (Beacon `membership` v1).
+    bytes32 public constant MEMBERSHIP_ID =
+        0x05559ff444cd5e85ff9633527685ac1e6009465c3ee0635569270e76d2c9597b;
+
+    bytes32 public membershipRoot;
+    mapping(bytes32 scope => mapping(bytes32 nullifier => bool)) public spent;
+
+    constructor(IVerifierHub hub_) { hub = hub_; }
+
+    function doGatedAction(bytes32 scope, bytes32 nullifier, bytes calldata proof) external {
+        // 1. Replay protection — your contract owns this, the hub is stateless.
+        require(!spent[scope][nullifier], "nullifier used");
+
+        // 2. Build the public inputs in the catalog's order: [scope, root, nullifier].
+        bytes32[] memory publicInputs = new bytes32[](3);
+        publicInputs[0] = scope;
+        publicInputs[1] = membershipRoot;
+        publicInputs[2] = nullifier;
+
+        // 3. Verify through Beacon. A `true` result is unforgeable.
+        require(hub.verify(MEMBERSHIP_ID, proof, publicInputs), "invalid proof");
+
+        spent[scope][nullifier] = true;
+        // ... your gated logic ...
+    }
+}
+```
+
+Off-chain, generate `(proof, publicInputs)` with the
+[SDK](/docs/beacon/installation) and pass them straight in. Use the **same `scope`** on both sides.
+
+## Example: Cipher's confidential DAO
+
+[Cipher](/docs/cipher)'s Private DAO Adapter gates encrypted voting on anonymous membership. Instead
+of embedding its own verifier, it verifies **through Beacon's hub** using a thin `IVerifier` shim —
+so the DAO consumes Beacon with no change to its own logic:
+
+```solidity
+import {IVerifier} from "./VoteSubmissionVerifier.sol";
+import {IVerifierHub} from "../beacon/interfaces/IVerifierHub.sol";
+
+/// Routes the DAO's membership check to Beacon's hub for the pinned membership circuit.
+contract MembershipHubAdapter is IVerifier {
+    IVerifierHub public immutable hub;
+    bytes32 public immutable circuitId;
+
+    constructor(IVerifierHub hub_, bytes32 circuitId_) {
+        hub = hub_;
+        circuitId = circuitId_;
+    }
+
+    function verify(bytes calldata proof, bytes32[] calldata publicInputs)
+        external view returns (bool)
+    {
+        return hub.verify(circuitId, proof, publicInputs);
+    }
+}
+```
+
+The DAO points its `voteSubmissionVerifier` at the shim. The membership circuit's public inputs are
+already `[scope, root, nullifier]` — the DAO sets `scope = proposalId`, giving each proposal its own
+nullifier namespace. This is Beacon's first production consumer.
+
+## Checklist
+
+- **Pin the `circuitId`** as a constant — don't read it from a mutable source.
+- **Build `publicInputs` in catalog order** (`[scope, root, nullifier]` for `membership`).
+- **Track nullifiers yourself**, keyed by `scope` — the hub won't.
+- **Pin the SDK peer deps** ([Installation](/docs/beacon/installation)) so proofs match the verifier.
+
+## Next steps
+
+- [Deployments](/docs/beacon/deployments) — the hub address to wire into your contract

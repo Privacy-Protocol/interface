@@ -1,0 +1,102 @@
+/*
+ * Docs theme bridge — maps Nextra's theme tokens onto the Privacy Protocol palette + fonts so the
+ * documentation matches the rest of the site (deep green-black surfaces, vivid green accents,
+ * Tutankhamono headings / Overused Grotesk body / IBM Plex Mono code). Loaded after
+ * `nextra-theme-docs/style.css` so these win.
+ */
+
+:root,
+.dark {
+  /* Surface: deep green-black (#081905) */
+  --nextra-bg: 8 25 5;
+  /* Accent: brand green (~#6fff59) used for links, active items, focus rings */
+  --nextra-primary-hue: 125deg;
+  --nextra-primary-saturation: 100%;
+  --nextra-primary-lightness: 62%;
+}
+
+/* Keep the docs in the site's single dark theme and hide the light/dark toggle. */
+.nextra-theme-switch,
+[data-testid="theme-switch"] {
+  display: none !important;
+}
+
+/* ---- Fonts ---- */
+.nextra-content,
+.nextra-sidebar,
+.nextra-toc,
+.docs-page-shell {
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.nextra-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading), var(--font-body), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.nextra-content :is(code, kbd, pre),
+.nextra-content :is(code, kbd, pre) span,
+.docs-page-shell :is(code, kbd, pre) {
+  font-family: var(--font-code), ui-monospace, monospace;
+}
+
+/* ---- Links & inline code ---- */
+.nextra-content a {
+  color: var(--color-primary, oklch(0.82 0.28 142));
+  text-decoration-color: color-mix(in oklch, var(--color-primary) 40%, transparent);
+}
+
+.nextra-content :not(pre) > code {
+  background: color-mix(in oklch, var(--color-card, oklch(0.14 0.025 145)) 70%, transparent);
+  border: 1px solid var(--color-border, oklch(0.22 0.02 145));
+  border-radius: var(--radius-sm, 0.3rem);
+  color: var(--color-muted-primary, oklch(0.9 0.19 141));
+  padding: 0.1rem 0.35rem;
+}
+
+/* ---- Code blocks ---- */
+.nextra-content pre,
+figure[data-rehype-pretty-code-figure] pre {
+  background: color-mix(in oklch, var(--color-card, oklch(0.14 0.025 145)) 80%, black 6%) !important;
+  border: 1px solid var(--color-border, oklch(0.22 0.02 145));
+  border-radius: var(--radius-lg, 0.5rem);
+}
+
+/* Code block filename / language label */
+figure[data-rehype-pretty-code-figure] figcaption {
+  font-family: var(--font-code), ui-monospace, monospace;
+  color: var(--color-muted-foreground, oklch(0.6 0.015 145));
+}
+
+/* ---- Tables (match the card/border look) ---- */
+.nextra-content table {
+  border-radius: var(--radius-lg, 0.5rem);
+  overflow: hidden;
+}
+
+.nextra-content thead {
+  background: color-mix(in oklch, var(--color-card, oklch(0.14 0.025 145)) 60%, transparent);
+}
+
+.nextra-content :is(th, td) {
+  border-color: var(--color-border, oklch(0.22 0.02 145));
+}
+
+/* ---- Sidebar: active item uses the brand green ---- */
+.nextra-sidebar a[aria-current="true"],
+.nextra-sidebar .nextra-focus[data-active="true"] {
+  background: color-mix(in oklch, var(--color-primary, oklch(0.82 0.28 142)) 14%, transparent);
+  color: var(--color-foreground, oklch(0.96 0 0));
+}
+
+/* ---- Callouts / blockquotes ---- */
+.nextra-content blockquote {
+  border-inline-start-color: var(--color-primary, oklch(0.82 0.28 142));
+  color: var(--color-muted-foreground, oklch(0.6 0.015 145));
+}
+
+/* Search box + cards inherit the site border treatment */
+.nextra-search input {
+  border: 1px solid var(--color-border, oklch(0.22 0.02 145));
+  background: color-mix(in oklch, var(--color-card, oklch(0.14 0.025 145)) 60%, transparent);
+}

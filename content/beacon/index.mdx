@@ -1,0 +1,60 @@
+# Beacon
+
+Beacon is a **modular zero-knowledge proof oracle** for EVM chains. It lets your contract verify a
+ZK proof — "this caller is a member", "this value is in range", "this statement holds" — without
+writing a circuit, generating a verifier, or trusting an off-chain service. You install a client
+SDK, generate a proof locally, and hand `(proof, publicInputs)` to a single on-chain entrypoint.
+
+```bash
+npm i @privacy-protocol/beacon
+```
+
+## What Beacon does
+
+- **Verify proofs from your contract** — call one shared `VerifierHub.verify(circuitId, proof, publicInputs)` instead of embedding a multi-million-gas verifier in every app.
+- **Privacy by default** — proving runs **client-side**. The user's secret never leaves their device; only the proof and its public inputs go on-chain.
+- **A curated circuit catalog** — pick a ready-made predicate by `circuitId`; Beacon supplies the circuit, the deployed verifier, and the SDK to prove against it.
+- **Trustless** — a `true` result is a cryptographic fact (SNARK soundness). Beacon runs no service in the proving path; it only publishes circuits, verifiers, and the SDK.
+
+## How it works
+
+1. **Pick a circuit** — choose a catalog predicate (v1 ships [`membership`](/docs/beacon/contracts)) and pin its `circuitId`.
+2. **Prove locally** — use [`@privacy-protocol/beacon`](/docs/beacon/installation) to generate an UltraHonk proof from the user's private witness.
+3. **Verify on-chain** — your contract calls `VerifierHub.verify(circuitId, proof, publicInputs)` and gates on the result.
+4. **Track your own state** — the hub is stateless; replay/nullifier accounting stays in your contract.
+
+## The catalog model
+
+Beacon is **catalog-only**: Privacy Protocol curates a set of audited circuits, each with a deployed
+verifier and a content-addressed id.
+
+```
+circuitId = keccak256(abi.encode(name, version))
+```
+
+Entries are **immutable** once registered — a new circuit version is a new `circuitId` and a new
+verifier. The registry owner can only add entries or toggle them active/inactive, never mutate them,
+so a `circuitId` you pin today means the same thing forever.
+
+| Circuit | Version | Public inputs | Purpose |
+| --- | --- | --- | --- |
+| [`membership`](/docs/beacon/contracts) | 1 | `[scope, root, nullifier]` | Prove membership in a Merkle set without revealing which member, with a scope-bound nullifier for replay protection |
+
+## Why Beacon
+
+- **No circuit engineering** — skip Noir, trusted setups, and verifier generation.
+- **Shared infrastructure** — reuse one on-chain verifier across every consumer; pay deployment cost once.
+- **Composable** — any contract can become a Beacon consumer by pinning a `circuitId` and calling the hub.
+- **Built for privacy** — the model is client-side proving first, so confidentiality is the default, not an add-on.
+
+## Supported networks
+
+- **Sepolia testnet** — available now
+- **Ethereum mainnet** — coming soon
+
+## Next steps
+
+- [Installation](/docs/beacon/installation) — add the SDK and pin the peer dependencies
+- [Contracts](/docs/beacon/contracts) — VerifierHub, CircuitRegistry, and the `membership` circuit
+- [Integrate](/docs/beacon/integrate) — make your contract a Beacon consumer
+- [Deployments](/docs/beacon/deployments) — live addresses

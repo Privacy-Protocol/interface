@@ -1,0 +1,21 @@
+# Adapters
+
+An **adapter** is a domain-specific Cipher toolkit: a set of reusable Solidity contracts you inherit
+and deploy to add a particular confidential workflow to your app. Adapters share Cipher's
+foundations — Noir zero-knowledge proofs and Zama FHE — and expose a small, purpose-built surface so
+you integrate by extending a contract rather than wiring cryptography by hand.
+
+## Available adapters
+
+| Adapter | Status | What it provides |
+| --- | --- | --- |
+| [**Private DAO Adapter**](/docs/cipher/adapters/private-dao-adapter) | Available | Confidential, OpenZeppelin-style governance: FHE-encrypted ballots, encrypted tallying, and an optional anonymous ZK membership gate |
+
+## How you use an adapter
+
+1. **Install** the [`@privacy-protocol/cipher-contracts`](/docs/cipher/installation) package.
+2. **Inherit** the adapter contract (or import its interface to call a deployed instance).
+3. **Deploy** your contract; reuse Cipher's shared on-chain infrastructure where available.
+4. **Drive it off-chain** — generate any required proofs and encrypted inputs from your app.
+
+Start with the [Private DAO Adapter →](/docs/cipher/adapters/private-dao-adapter)

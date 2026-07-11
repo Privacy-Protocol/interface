@@ -1,0 +1,162 @@
+# Build Your DAO
+
+`PrivateDaoAdapter` is a complete confidential Governor. You build your DAO by **inheriting it** —
+the same way you'd extend OpenZeppelin's `Governor`. There's no separate "manager" contract to call
+into; proposers and voters interact with your contract directly.
+
+## The constructor
+
+```solidity
+constructor(
+    IVotesConfidential token,        // your confidential ERC-7984 votes token
+    address voteSubmissionVerifier,  // a Noir verifier, or address(0) to start ZK-disabled
+    bytes32 membershipRoot           // the Poseidon2 root, or bytes32(0) when ZK-disabled
+)
+```
+
+The third and fourth arguments select the mode:
+
+- **Confidential only** — pass `address(0)` and `bytes32(0)`. Members vote with the inherited
+  `castEncryptedVote*` entrypoints; eligibility is purely token weight.
+- **Confidential + ZK gate** — pass a deployed verifier and a non-zero membership root. The un-gated
+  entrypoints are disabled and voting must go through `castEncryptedVoteWithMembershipProof`.
+
+You can switch modes later with [`setZkMembership`](#runtime-toggle).
+
+## Minimal DAO
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {PrivateDaoAdapter} from "@privacy-protocol/cipher-contracts/src/DaoToolkit/PrivateDaoAdapter.sol";
+import {IVotesConfidential} from "@privacy-protocol/cipher-contracts/src/Governance/interfaces/IVotesConfidential.sol";
+
+/// A confidential, membership-gated DAO — a thin deployment of the adapter.
+contract MyDao is PrivateDaoAdapter {
+    constructor(
+        IVotesConfidential token,
+        address voteSubmissionVerifier,
+        bytes32 membershipRoot
+    ) PrivateDaoAdapter(token, voteSubmissionVerifier, membershipRoot) {}
+}
+```
+
+That's it — you inherit the full Governor surface (`propose`, `state`, `execute`, …) plus the
+confidential voting and result-decryption flow. Governance parameters (voting delay/period, quorum
+fraction) come from the adapter; override the `votingDelay()` / `votingPeriod()` functions if you
+want different values.
+
+> **Defaults:** the adapter uses a timestamp clock — `votingDelay` ≈ 2h, `votingPeriod` ≈ 14h,
+> quorum 4% of the (encrypted) total supply.
+
+## Step 1 — Give members voting power
+
+Voting weight is token-sourced. Each member must hold the confidential votes `token` and
+**delegate** (to themselves or another address) before a proposal's snapshot:
+
+```solidity
+token.delegate(msg.sender); // activate my voting power
+```
+
+The governor reads `getPastVotes(account, snapshot)` and `confidentialTotalSupply()` as encrypted
+handles, so your token must grant the DAO FHE access to those handles (ERC-7984 exposes a
+handle-allowance mechanism for this). See your token's docs.
+
+## Step 2 — Create a proposal
+
+Proposals are standard Governor — nothing confidential about the action itself:
+
+```solidity
+uint256 proposalId = dao.propose(targets, values, calldatas, description);
+```
+
+`proposalId = hashProposal(targets, values, calldatas, keccak256(bytes(description)))`. Voting opens
+after `votingDelay` and lasts `votingPeriod`.
+
+## Step 3 — Vote
+
+### ZK gate enabled
+
+Members submit an encrypted ballot **and** a membership proof in one transaction:
+
+```solidity
+dao.castEncryptedVoteWithMembershipProof(
+    proposalId,
+    encryptedSupport,  // externalEuint8 handle (0 Against / 1 For / 2 Abstain)
+    inputProof,        // FHE input proof for the ballot
+    nullifierHash,     // bytes32 nullifier from the circuit
+    membershipProof    // serialized Noir proof
+);
+```
+
+The contract checks the nullifier is unspent, verifies the Noir proof against
+`[proposalId % BN254, membershipRoot, nullifierHash]`, marks the nullifier spent, then adds the
+voter's encrypted weight to the encrypted tally. The ballot is never revealed.
+
+Generating `encryptedSupport` / `inputProof` (FHE) and `nullifierHash` / `membershipProof` (ZK)
+happens off-chain — see [Proofs & Encryption](/docs/cipher/adapters/private-dao-adapter/proofs).
+
+### ZK gate disabled
+
+No proof, no nullifier — just the encrypted ballot:
+
+```solidity
+dao.castEncryptedVote(proposalId, encryptedSupport, inputProof);
+```
+
+(While the gate is **enabled**, this entrypoint reverts with `PDA__MembershipProofRequired`.)
+
+## Step 4 — Decrypt the result
+
+The tally stays encrypted. After the deadline, a three-step handshake reveals only the two result
+booleans:
+
+```solidity
+// 1. On-chain: make the encrypted result booleans publicly decryptable
+dao.requestProposalResultDecryption(proposalId);
+
+// 2. Off-chain: fetch the KMS public decryption of the two handles (relayer SDK)
+
+// 3. On-chain: finalize with the decrypted values + KMS proof
+dao.finalizeProposalResult(proposalId, abiEncodedResult, decryptionProof);
+```
+
+Only now does `state(proposalId)` resolve to `Succeeded` / `Defeated`. Individual ballots and the
+Against/For/Abstain counts stay encrypted forever.
+
+> **State quirk:** between the deadline and `finalizeProposalResult`, `state()` reverts with
+> `GovernorConfidential__ResultNotFinalized`. Treat that revert as "awaiting decryption".
+
+## Step 5 — Execute
+
+```solidity
+dao.execute(targets, values, calldatas, keccak256(bytes(description)));
+```
+
+## Runtime toggle
+
+The owner can enable, disable, or reconfigure the ZK gate at any time:
+
+```solidity
+// Enable / reconfigure: a deployed verifier + a non-zero membership root
+dao.setZkMembership(verifier, membershipRoot);
+
+// Disable: clears both, reverting to confidential-only voting
+dao.setZkMembership(address(0), bytes32(0));
+
+// Rotate the member set while the gate stays on
+dao.setMembershipRoot(newRoot);
+
+// Read the current mode
+bool gated = dao.zkMembershipEnabled();
+```
+
+> **Do it between proposals.** Toggling changes which vote path is valid; reconfigure the gate when
+> no proposal is in its active voting window.
+
+## Next steps
+
+- [Membership & Proving Kits](/docs/cipher/adapters/private-dao-adapter/membership) — how the member set and roots are built
+- [Proofs & Encryption](/docs/cipher/adapters/private-dao-adapter/proofs) — generate the off-chain inputs
+- [Deployment](/docs/cipher/adapters/private-dao-adapter/deployment) — deploy your DAO and (optionally) a verifier

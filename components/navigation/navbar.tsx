@@ -39,6 +39,11 @@ const groups: { label: string; items: NavItem[] }[] = [
         description: "Actor privacy & shielding",
         href: PAGE_LINKS.CLOAK,
       },
+      {
+        title: "Beacon",
+        description: "Modular ZK proof oracle",
+        href: PAGE_LINKS.BEACON,
+      },
     ],
   },
   {
@@ -49,11 +54,11 @@ const groups: { label: string; items: NavItem[] }[] = [
         description: "Guides & API reference",
         href: PAGE_LINKS.DOCS,
       },
-      {
-        title: "Relayer",
-        description: "Privacy Protocol Relayer",
-        href: PAGE_LINKS.RELAYER,
-      },
+      // {
+      //   title: "Relayer",
+      //   description: "Privacy Protocol Relayer",
+      //   href: PAGE_LINKS.RELAYER,
+      // },
       {
         title: "GitHub",
         description: "Source code, examples and contribute",
@@ -62,21 +67,21 @@ const groups: { label: string; items: NavItem[] }[] = [
       },
     ],
   },
-  {
-    label: "Resources",
-    items: [
-      {
-        title: "Blog",
-        description: "Updates & releases",
-        href: PAGE_LINKS.BLOG,
-      },
-      {
-        title: "Research",
-        description: "Protocol research",
-        href: PAGE_LINKS.RESEARCH,
-      },
-    ],
-  },
+  // {
+  //   label: "Resources",
+  //   items: [
+  //     {
+  //       title: "Blog",
+  //       description: "Updates & releases",
+  //       href: PAGE_LINKS.BLOG,
+  //     },
+  //     {
+  //       title: "Research",
+  //       description: "Protocol research",
+  //       href: PAGE_LINKS.RESEARCH,
+  //     },
+  //   ],
+  // },
 ]
 
 const socials = [

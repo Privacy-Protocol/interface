@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion"
 import { reveal } from "./landing-page"
-import { TerminalFrame } from "./terminal-frame"
+import { TerminalFrame } from "../ui/terminal-frame"
+import { SectionTitle } from "./section-title"
 
 const problems = [
   {
@@ -48,19 +49,11 @@ export function WhySection() {
       className="relative bg-secondary bg-[url('/PP-Star-E.png')] bg-contain bg-right bg-no-repeat px-4 py-20 sm:px-6 sm:py-28"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center gap-3">
-          <span className="font-code text-xs tracking-[0.25em] text-primary uppercase">
-            {">_ The problem"}
-          </span>
-        </div>
-
-        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Privacy in web3 is important.
-          <br />
-          <span className="text-accent">
-            Building it shouldn&apos;t come with any hassles.
-          </span>
-        </h2>
+        <SectionTitle
+          eyebrow="Why Privacy Protocol?"
+          title="Privacy in web3 is important."
+          subtitle="Building it shouldn't come with any hassles."
+        />
 
         <div className="mt-12 grid gap-4 lg:grid-cols-2">
           <div className="space-y-6">
@@ -81,9 +74,6 @@ export function WhySection() {
                     variant="foreground"
                   >
                     <div className="flex items-start gap-3">
-                      {/* <span className="mt-0.5 font-code text-[0.55rem] text-muted-foreground/50">
-                        {String(i + 1).padStart(2, "0")}
-                      </span> */}
                       <div>
                         <p className="text-base font-medium text-foreground">
                           {item.label}

@@ -5,6 +5,7 @@ import { Navbar } from "@/components/navigation/navbar"
 import { Footer } from "@/components/navigation/footer"
 
 import "nextra-theme-docs/style.css"
+import "./docs-theme.css"
 
 export default async function DocsLayout({
   children,
@@ -22,6 +23,8 @@ export default async function DocsLayout({
           sidebar={{ defaultOpen: true }}
           navbar={null}
           footer={null}
+          darkMode={false}
+          nextThemes={{ defaultTheme: "dark", forcedTheme: "dark" }}
         >
           {children}
         </Layout>

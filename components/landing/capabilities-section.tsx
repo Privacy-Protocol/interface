@@ -6,7 +6,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PAGE_LINKS } from "@/lib/constants"
 import { reveal } from "./landing-page"
-import { TerminalFrame } from "./terminal-frame"
+import { TerminalFrame } from "../ui/terminal-frame"
+import { ProductCard } from "../product-pages/product-card"
+import { ProductCardTitle } from "../product-pages/product-card-title"
+import { SectionTitle } from "./section-title"
 
 const capabilities = [
   {
@@ -54,18 +57,37 @@ const capabilities = [
     buttonLabel: "View Docs",
     href: PAGE_LINKS.DOCS,
   },
+  // {
+  //   title: "Research Feeds the Product",
+  //   tag: "research",
+  //   description:
+  //     "Alongside shipping tools, we research protocol design and improvements to current cryptographic systems to make confidential applications more practical to build and deploy.",
+  //   span: "lg:col-span-12",
+  //   image: "/PP-eUTXO-WS.png",
+  //   imagePosition: "right",
+  //   fullWidthText: true,
+  //   buttonLabel: "View Research",
+  //   href: "#research",
+  //   scrollTarget: "research",
+  // },
+]
+
+const appCategories = [
   {
-    title: "Research Feeds the Product",
-    tag: "research",
-    description:
-      "Alongside shipping tools, we research protocol design and improvements to current cryptographic systems to make confidential applications more practical to build and deploy.",
-    span: "lg:col-span-12",
-    image: "/PP-eUTXO-WS.png",
-    imagePosition: "right",
-    fullWidthText: true,
-    buttonLabel: "View Research",
-    href: "#research",
-    scrollTarget: "research",
+    title: "Confidential Governance",
+    text: "Private voting, encrypted tallying, and rule enforcement for onchain organizations.",
+  },
+  {
+    title: "Private Payments",
+    text: "Protect sensitive transaction details and payment flows from public exposure.",
+  },
+  {
+    title: "Confidential Markets",
+    text: "Support sealed bids, private offers, and protected price discovery.",
+  },
+  {
+    title: "Private Compliance",
+    text: "Verify access, eligibility, and policy checks without exposing user data.",
   },
 ]
 
@@ -77,18 +99,11 @@ export function CapabilitiesSection() {
       className="relative bg-secondary px-4 py-20 sm:px-6 sm:py-28"
     >
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center gap-3">
-          <span className="font-code text-xs tracking-[0.25em] text-primary uppercase">
-            {">_ Capabilities"}
-          </span>
-          <span className="h-px flex-1 bg-border/60" />
-        </div>
-
-        <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Advanced cryptography.
-          <br />
-          <span className="text-accent">Simple developer surface.</span>
-        </h2>
+        <SectionTitle
+          eyebrow="Capabilities"
+          title="Advanced cryptography."
+          subtitle="Simple developer surface."
+        />
 
         <div className="mt-10 grid gap-3 lg:grid-cols-12">
           {capabilities.map((cap, i) => (
@@ -129,6 +144,17 @@ export function CapabilitiesSection() {
                       </div>
 
                       <h3
+                        className={`max-w-xl" } mt-3 font-heading text-lg font-semibold text-accent sm:text-xl`}
+                      >
+                        {cap.title}
+                      </h3>
+
+                      <p
+                        className={`max-w-xl" } mt-2 text-[0.95rem] leading-relaxed text-foreground sm:text-base`}
+                      >
+                        {cap.description}
+                      </p>
+                      {/* <h3
                         className={`mt-3 font-heading text-lg font-semibold text-accent sm:text-xl ${
                           cap.fullWidthText ? "" : "max-w-xl"
                         }`}
@@ -142,7 +168,7 @@ export function CapabilitiesSection() {
                         }`}
                       >
                         {cap.description}
-                      </p>
+                      </p> */}
                     </div>
 
                     <Button
@@ -171,6 +197,20 @@ export function CapabilitiesSection() {
               </TerminalFrame>
             </motion.article>
           ))}
+        </div>
+
+        <div className="mt-10">
+          <h2 className="mt-4 font-heading text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            Some of the applications that can be built with Privacy Protocol
+          </h2>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {appCategories.map((item) => (
+              <ProductCard key={item.title} variant="primary">
+                <ProductCardTitle title={item.title} description={item.text} />
+              </ProductCard>
+            ))}
+          </div>
         </div>
       </div>
     </motion.section>

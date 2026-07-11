@@ -8,6 +8,8 @@ import { CapabilitiesSection } from "./capabilities-section"
 import { ProductsSection } from "./products-section"
 import { ResearchSection } from "./research-section"
 import { CtaSection } from "./cta-section"
+import { TrustSection } from "./trust-section"
+import { FAQSection } from "./faq-section"
 
 const posts: TResearchPost[] = [
   {
@@ -63,8 +65,10 @@ export function LandingPage() {
         <HeroSection />
         <WhySection />
         <CapabilitiesSection />
+        <TrustSection />
         <ProductsSection />
-        <ResearchSection researchData={posts} />
+        {/* <ResearchSection researchData={posts} /> */}
+        <FAQSection />
         <CtaSection />
       </main>
 

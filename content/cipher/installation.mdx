@@ -1,0 +1,92 @@
+# Installation
+
+## Add Cipher to your project
+
+```bash
+npm install @privacy-protocol/cipher-contracts @fhevm/solidity @openzeppelin/contracts
+```
+
+This installs:
+
+- `@privacy-protocol/cipher-contracts` — the Cipher Solidity sources (the adapters)
+- `@fhevm/solidity` — Zama's FHE library (peer dependency)
+- `@openzeppelin/contracts` — standard contract primitives (peer dependency)
+
+## Hardhat configuration
+
+Cipher contracts target Solidity `0.8.27` on the Cancun EVM, and FHE needs the fhEVM plugin:
+
+```typescript
+// hardhat.config.ts
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@fhevm/hardhat-plugin";
+import "dotenv/config";
+
+const config: HardhatUserConfig = {
+  solidity: {
+    version: "0.8.27",
+    settings: {
+      optimizer: { enabled: true, runs: 10 },
+      evmVersion: "cancun",
+    },
+  },
+  networks: {
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL ?? "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+  },
+};
+
+export default config;
+```
+
+```bash
+npm install --save-dev @fhevm/hardhat-plugin @nomicfoundation/hardhat-toolbox dotenv
+```
+
+> Some adapters include a large on-chain verifier; the low optimizer `runs` (10) keeps deployment
+> bytecode within limits. If you only deploy your own contracts (and reuse a shared verifier), you
+> can raise it.
+
+## Off-chain dependencies
+
+If your app generates proofs or encrypts inputs, add the client stack (see the adapter's docs for
+pinned versions):
+
+```bash
+npm install @noir-lang/noir_js @aztec/bb.js @zama-fhe/relayer-sdk
+```
+
+## Verify the install
+
+Cipher ships Solidity sources under `@privacy-protocol/cipher-contracts/src/...`. Import a symbol
+from the adapter you plan to use and compile. For the
+[Private DAO Adapter](/docs/cipher/adapters/private-dao-adapter):
+
+```solidity
+// contracts/TestImport.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {IPrivateDaoAdapter} from
+    "@privacy-protocol/cipher-contracts/src/DaoToolkit/interface/IPrivateDaoAdapter.sol";
+
+contract TestImport {
+    IPrivateDaoAdapter public adapter;
+    constructor(address _adapter) {
+        adapter = IPrivateDaoAdapter(_adapter);
+    }
+}
+```
+
+```bash
+npx hardhat compile
+```
+
+If it compiles, you're ready. Delete `TestImport.sol` and head to [Adapters](/docs/cipher/adapters).
+
+## Next steps
+
+- [Adapters](/docs/cipher/adapters) — choose an adapter and start integrating

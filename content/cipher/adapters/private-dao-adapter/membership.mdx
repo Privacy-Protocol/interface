@@ -1,0 +1,73 @@
+# Membership & Proving Kits
+
+When the ZK gate is enabled, the DAO commits to a **membership root** — the root of a Poseidon2
+Merkle tree (height 32) whose leaves are member commitments. To vote, a member needs a **proving
+kit**: their secret plus the Merkle path that proves their leaf is in the tree.
+
+This page describes the lifecycle. None of it is required when the gate is disabled.
+
+## The three artifacts
+
+| Artifact | Visibility | Held by | Contents |
+| --- | --- | --- | --- |
+| **Identity** | private | the member | `identitySecret`, `leafHash` |
+| **Member set** | public | published by the operator | ordered `leaves[]`, `membershipRoot` |
+| **Proving kit** | private | the member | `identitySecret`, `leafIndex`, `siblingPath`, `membershipRoot` |
+
+- **leaf** = `Poseidon2(identitySecret)`
+- **root** = Poseidon2 Merkle root over the ordered leaves (height 32)
+- **nullifier** = `Poseidon2(proposalId mod BN254, identitySecret)`
+
+## The privacy-preserving flow
+
+Secrets never leave the member's device, and the operator never learns them.
+
+```text
+Member                         Operator                        Chain
+  │ 1. createIdentity()          │                               │
+  │    secret + leaf             │                               │
+  │ ──── leaf commitment ───────►│                               │
+  │                              │ 2. collect leaves             │
+  │                              │    build tree → root          │
+  │                              │ ──── setZkMembership(v, root) ─►│
+  │ ◄─── publish member set ─────│                               │
+  │ 3. build proving kit         │                               │
+  │    (sibling path from set)   │                               │
+  │ 4. vote with kit ───────────────────────────────────────────►│
+```
+
+1. **Member creates an identity** — generate a random BN254 field `identitySecret` locally; derive
+   the public `leaf = Poseidon2(secret)`. Send the operator **only the leaf**.
+2. **Operator builds the tree** from the collected leaf commitments, sets the root on-chain
+   (`setZkMembership(verifier, root)`), and **publishes the member set** (ordered leaves + root).
+3. **Member builds their proving kit** from the published member set + their secret: find their
+   leaf, derive their `siblingPath`, and verify the recomputed root matches.
+4. **Member votes** with the kit — the proof is generated from the kit alone, needing no other
+   member's data.
+
+Because the leaf ordering defines `leafIndex`, the operator must keep the leaves in a stable order.
+
+## Demo / small-DAO shortcut
+
+For small or trusted groups, the operator can collect or assign the **secrets** directly, build the
+tree, and hand each member a ready-made proving kit. This is simpler but the operator learns every
+secret — acceptable for a demo, not for anonymity-from-the-operator. Prefer the commitment flow
+above for production.
+
+## Rotating membership
+
+Add or remove members by rebuilding the tree from the new leaf set and calling
+`setMembershipRoot(newRoot)` (gate stays enabled) or `setZkMembership(verifier, newRoot)`.
+Previously issued kits become stale once the root changes — members rebuild from the new member set.
+Do rotations **between proposals**.
+
+## Reference implementation
+
+The open-source reference dApp implements this end to end — identity creation, operator tree
+building + member-set export, kit building, and kit-based voting — using the same Poseidon2 tree the
+on-chain root commits to. Use it as a blueprint for your own member tooling.
+
+## Next steps
+
+- [Proofs & Encryption](/docs/cipher/adapters/private-dao-adapter/proofs) — turn a kit into an on-chain vote
+- [API Reference](/docs/cipher/adapters/private-dao-adapter/api-reference) — the membership-gate functions

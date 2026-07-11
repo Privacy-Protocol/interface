@@ -1,0 +1,152 @@
+# Proofs & Encryption
+
+Casting a membership-gated vote needs **two independent off-chain artifacts**, both built client- or
+server-side:
+
+1. A **Noir membership proof** (zero-knowledge) — proves the voter is in the DAO and binds a
+   one-time nullifier.
+2. An **FHE-encrypted ballot** (Zama) — encrypts the choice so the contract can tally it without
+   reading it.
+
+Both are passed to `castEncryptedVoteWithMembershipProof` in a single transaction. This page shows
+how to produce each, then finalize the result.
+
+## The membership circuit
+
+The circuit proves eligibility only — the ballot is **not** an input.
+
+| Input | Visibility | Meaning |
+| --- | --- | --- |
+| `proposal_id` | public | the proposal, reduced modulo the BN254 field |
+| `membership_root` | public | the on-chain Poseidon2 root |
+| `nullifier_hash` | public | `Poseidon2(proposal_id, identity_secret)` |
+| `identity_secret` | private | the voter's secret — never revealed |
+| `leaf_index` | private | position in the Merkle tree |
+| `sibling_path` | private | length-32 Merkle path |
+
+On-chain, the verifier is called with public inputs `[proposal_id % BN254, membershipRoot,
+nullifierHash]`. Your prover must reduce `proposal_id` the **same way** so the nullifier matches.
+
+> Cipher ships the **verifier**, not the circuit. The bundled verifier matches the reference
+> circuit. If you author a custom circuit, regenerate and deploy your own verifier — see
+> [Deployment](/docs/cipher/adapters/private-dao-adapter/deployment).
+
+## 1. Build the membership proof
+
+Using `@noir-lang/noir_js` (witness) + `@aztec/bb.js` (Poseidon2 + UltraHonk). The proof **must** use
+the `keccakZK` oracle hash so it verifies inside the Solidity `HonkVerifier`.
+
+```typescript
+import { UltraHonkBackend } from "@aztec/bb.js";
+import { Noir } from "@noir-lang/noir_js";
+import { pad, toHex } from "viem";
+
+const BN254 = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+
+// `kit` is the member's proving kit (secret + leafIndex + siblingPath); `circuit` is the
+// compiled Noir artifact (circuits.json). See Membership & Proving Kits for how a kit is built.
+export async function buildMembershipProof(proposalId: bigint, kit: ProvingKit, circuit: any) {
+  const reducedProposalId = proposalId % BN254;
+  const nullifier = await poseidon2([reducedProposalId, BigInt(kit.identitySecret)]);
+
+  const input = {
+    proposal_id: reducedProposalId.toString(),
+    membership_root: BigInt(kit.membershipRoot).toString(),
+    nullifier_hash: nullifier.toString(),
+    identity_secret: BigInt(kit.identitySecret).toString(),
+    leaf_index: kit.leafIndex,
+    sibling_path: kit.siblingPath.map((s) => BigInt(s).toString()),
+  };
+
+  const { witness } = await new Noir(circuit).execute(input);
+  const backend = new UltraHonkBackend(circuit.bytecode, { threads: 1 });
+  const { proof } = await backend.generateProof(witness, { keccakZK: true });
+
+  return {
+    membershipProof: toHex(proof),
+    nullifierHash: pad(toHex(nullifier), { size: 32 }),
+  };
+}
+```
+
+`poseidon2` is the Barretenberg Poseidon2 hash (`@aztec/bb.js` `BarretenbergSync`), the same hash
+used to build the membership tree — so leaves, root, and nullifier all agree.
+
+## 2. Encrypt the ballot (FHE)
+
+Using `@zama-fhe/relayer-sdk`. The encryption is bound to `(dao, voter)`, so it can't be replayed
+elsewhere.
+
+```typescript
+import { initSDK, createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/web";
+
+await initSDK();
+const fhevm = await createInstance({ ...SepoliaConfig, network: RPC_URL });
+
+// support: 0 Against / 1 For / 2 Abstain
+const enc = await fhevm
+  .createEncryptedInput(daoAddress, voterAddress)
+  .add8(support)
+  .encrypt();
+
+const encryptedSupport = enc.handles[0]; // externalEuint8 handle
+const inputProof = enc.inputProof;       // FHE input proof
+```
+
+## 3. Submit the vote
+
+```typescript
+await dao.castEncryptedVoteWithMembershipProof(
+  proposalId,
+  encryptedSupport,
+  inputProof,
+  nullifierHash,
+  membershipProof,
+);
+```
+
+With the ZK gate **disabled**, skip steps 1 and just call
+`dao.castEncryptedVote(proposalId, encryptedSupport, inputProof)`.
+
+## 4. Decrypt and finalize the result
+
+After the deadline, reveal only the two result booleans:
+
+```typescript
+// (a) on-chain: mark the result handles publicly decryptable
+await dao.requestProposalResultDecryption(proposalId);
+
+// (b) read the encrypted result handles, then ask the KMS to decrypt them
+const [encQuorum, encSucceeded] = await dao.encryptedProposalResult(proposalId);
+const result = await fhevm.publicDecrypt([encQuorum, encSucceeded]);
+// result.clearValues          → { [handle]: boolean }
+// result.abiEncodedClearValues → abi.encode(bool quorumReached, bool voteSucceeded)
+// result.decryptionProof       → KMS signatures, re-verified on-chain
+
+// (c) on-chain: finalize
+await dao.finalizeProposalResult(
+  proposalId,
+  result.abiEncodedClearValues,
+  result.decryptionProof,
+);
+```
+
+A voter can also decrypt **their own** confidential balance / voting power with the relayer's
+`userDecrypt` flow (an ephemeral keypair + an EIP-712 authorization signature) — useful for showing
+a member their weight before they vote.
+
+## Where to run this
+
+- **Client-side** — everything above runs in the browser (WASM). UltraHonk proving is single-threaded
+  by default; expect a few seconds per proof.
+- **Server-side** — the same code runs in a Node backend if you'd rather generate proofs on a server
+  and return them to the client. Keep the compiled circuit artifact and the pinned library versions
+  alongside it.
+
+The reference dApp implements this full pipeline (tree → kit → proof → encrypt → vote → decrypt) and
+is a good copy-paste starting point.
+
+## Next steps
+
+- [Deployment](/docs/cipher/adapters/private-dao-adapter/deployment) — deploy your DAO and verifier
+- [API Reference](/docs/cipher/adapters/private-dao-adapter/api-reference) — the on-chain functions used above

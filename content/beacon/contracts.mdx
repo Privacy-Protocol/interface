@@ -1,0 +1,80 @@
+# Contracts
+
+Beacon's on-chain surface is two small contracts plus one verifier per catalog circuit. Consumers
+only ever call **`VerifierHub.verify`**.
+
+## VerifierHub
+
+The stateless, trustless verification entrypoint. It looks a circuit up in the registry, checks the
+public-input count, and routes to the registered verifier via `STATICCALL`.
+
+```solidity
+interface IVerifierHub {
+    function verify(bytes32 circuitId, bytes calldata proof, bytes32[] calldata publicInputs)
+        external
+        view
+        returns (bool);
+}
+```
+
+- **`view`** — verification is a pure cryptographic check, so it costs no state and can't be forged.
+- **Stateless** — the hub holds no app state. Replay protection (spent nullifiers) is **your contract's responsibility**.
+- **Reverts** on an unknown or inactive `circuitId`, or a wrong public-input count; returns `false` only when the proof itself is invalid.
+
+## CircuitRegistry
+
+The owner-curated catalog. Maps an immutable, content-addressed `circuitId` to its verifier and
+metadata.
+
+```solidity
+circuitId = keccak256(abi.encode(name, version));
+```
+
+Each entry stores `{ verifier, vkHash, publicInputs, active, schema }`. Entries are **immutable**
+once registered — only the `active` flag can be toggled. A new circuit version is a new `circuitId`
+and a new verifier, so a pinned id never changes meaning.
+
+> Governance: the registry is single-owner today (it can add and (de)activate entries). Ownership
+> moves to a multisig before mainnet.
+
+## The `membership` circuit
+
+v1 ships a single predicate: **prove membership in a Merkle set without revealing which member**,
+with a scope-bound nullifier for replay protection.
+
+| | |
+| --- | --- |
+| **Name / version** | `membership` / `1` |
+| **`circuitId` (`MEMBERSHIP_ID`)** | `0x05559ff444cd5e85ff9633527685ac1e6009465c3ee0635569270e76d2c9597b` |
+| **Public inputs** | `[scope, root, nullifier]` |
+| **Proof system** | UltraHonk (Noir) |
+| **Merkle depth** | 32 |
+
+### Public-input convention
+
+```
+publicInputs = [scope, root, nullifier]
+```
+
+- **`scope`** — a `bytes32` domain separator **you choose** (e.g. a proposal id, an epoch, an app
+  id). It binds the proof and nullifier to a context. It must be a canonical BN254 field element;
+  the SDK reduces your value and returns the exact `publicInputs` to pass on-chain.
+- **`root`** — the Merkle root of the membership set.
+- **`nullifier`** — a one-time marker, unique per `(scope, member)`, that lets you reject replays
+  **without** linking back to the member.
+
+### Protocol facts (SDK and contract agree)
+
+```
+leaf       = Poseidon2(secret)
+nullifier  = Poseidon2(scope mod p, secret)
+```
+
+These are fixed by the deployed verification key. If you generate proofs, use
+[`@privacy-protocol/beacon`](/docs/beacon/installation) at the pinned peer-dependency versions so
+your proofs match the on-chain verifier.
+
+## Next steps
+
+- [Integrate](/docs/beacon/integrate) — make your contract a consumer
+- [Deployments](/docs/beacon/deployments) — live addresses

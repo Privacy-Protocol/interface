@@ -1,0 +1,57 @@
+# Prerequisites
+
+What you need to build with Cipher. Each adapter may add its own requirements — those are listed in
+the adapter's own docs.
+
+## On-chain tooling
+
+| Tool | Version | Purpose |
+| --- | --- | --- |
+| **Node.js** | 20+ | Runtime for scripts and tooling |
+| **npm / yarn / pnpm** | latest | Package management |
+| **Hardhat** _or_ **Foundry** | latest | Smart-contract development |
+| **Solidity** | `^0.8.27` | Cipher contracts target 0.8.27 (Cancun EVM) |
+
+### Peer dependencies
+
+Installed alongside the contracts (see [Installation](/docs/cipher/installation)):
+
+- [`@fhevm/solidity`](https://docs.zama.ai/) `^0.11.1` — Zama's FHE Solidity library
+- [`@openzeppelin/contracts`](https://docs.openzeppelin.com/contracts) `^5.6.0` — standard contract primitives
+
+## Off-chain tooling
+
+Cipher's contracts are on-chain only. Adapters that use ZK and/or FHE need a client (frontend or
+backend) to generate proofs and encrypt inputs. The common stack:
+
+| Package | Purpose |
+| --- | --- |
+| [`@noir-lang/noir_js`](https://noir-lang.org/) | Execute a compiled Noir circuit → witness |
+| [`@aztec/bb.js`](https://www.npmjs.com/package/@aztec/bb.js) | Poseidon2 hashing + UltraHonk proving |
+| [`@zama-fhe/relayer-sdk`](https://docs.zama.ai/) | Encrypt inputs, fetch KMS decryptions |
+| `ethers` _or_ `viem` | ABI encoding + hex utilities |
+
+Exact versions are pinned per adapter — using the versions an adapter's deployed verifier was built
+with is what makes proofs verify. See the adapter's docs.
+
+## Concepts in 60 seconds
+
+You don't need to be a cryptographer, but these help:
+
+### Fully Homomorphic Encryption (FHE)
+
+Computation on encrypted data. Cipher encrypts sensitive values so a contract can compute on them —
+add them, compare them, tally them — and store encrypted results no one can read, decrypting only
+the intended output.
+
+### Zero-Knowledge proofs (ZK)
+
+Prove a statement is true without revealing the underlying data — for example, *"I'm eligible"*
+without revealing **who** you are. Cipher uses Noir circuits verified on-chain.
+
+> Adapters combine these: FHE keeps the data confidential, ZK proves the rules were followed.
+
+## Next steps
+
+- [Installation](/docs/cipher/installation) — add Cipher to your project
+- [Adapters](/docs/cipher/adapters) — pick an adapter to integrate
